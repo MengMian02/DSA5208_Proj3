@@ -1,0 +1,10 @@
+.venv/
+*.exe
+*.lib
+*.pdb
+*.obj
+*.o
+*.out
+zig-cache/
+.zig-cache/
+__pycache__/
