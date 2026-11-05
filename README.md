@@ -1,287 +1,191 @@
-# Covertype K-means: serial, OpenMP, MPI, and hybrid
+# Covertype K-means: serial, OpenMP, MPI, hybrid and Apple Metal
 
-This repository contains four C++17 implementations of the same Lloyd
-K-means algorithm:
+Parallel scaling study (DSA5208 Project 3) of Lloyd's K-means on the UCI
+Covertype dataset: 54 features, 581012 observations, classification label
+excluded, K = 7 by default.
 
-- `kmeans_serial.cpp`: serial reference.
-- `kmeans_openmp.cpp`: one process with OpenMP threads.
-- `kmeans_mpi.cpp`: distributed-memory MPI.
-- `kmeans_hybrid.cpp`: MPI ranks with OpenMP teams inside each rank.
+Five implementations share one algorithm definition through
+kmeans_common.hpp:
 
-Each program reads the UCI Covertype CSV with 54 numerical features and one
-known class label. The label is excluded from clustering. The programs use
-the same data validation, z-score preprocessing for the first 10 features,
-`std::mt19937_64`-seeded K-means++ initialization, squared Euclidean
-distance, lowest-cluster-ID tie breaking, empty-cluster policy, and
-label-change convergence rule.
+| Program | Parallelism | Notes |
+|---|---|---|
+| kmeans_serial | none | reference implementation |
+| kmeans_openmp | OpenMP threads | thread-local accumulation, schedule(static) |
+| kmeans_mpi | MPI ranks | observation-wise decomposition, MPI_Allreduce, optional deterministic weak-scaling generation |
+| kmeans_hybrid | MPI ranks x OpenMP threads | MPI_Init_thread(MPI_THREAD_FUNNELED) |
+| kmeans_metal | Apple GPU (Metal) | local-only, macOS + Apple Silicon |
+
+## Algorithm and shared conventions
+
+Identical in every CPU implementation, preserved from the original code:
+
+* C++17, constexpr int D = 54, contiguous row-major std::vector<double>.
+* 55-column Covertype CSV; column 55 is the class label and is discarded.
+* z-score of the first 10 continuous features (population standard deviation,
+  zero-variance feature maps to 0); the 44 binary features are untouched.
+* K-means++ initialization seeded by std::mt19937_64.
+* Squared Euclidean distance, lowest-cluster-id tie breaking.
+* Lloyd assignment and centroid update; **empty clusters keep their previous
+  centroid**.
+* Convergence = zero changed assignment labels across the whole dataset.
+* Output metrics: rows, features, k, max_iter, seed, iterations, inertia,
+  load_s, preprocess_s, init_s, fit_s, validation_s, total_s, converged,
+  cluster_sizes, label_hash, plus csv_header=/csv= machine-readable lines.
+
+### Timing boundaries
+
+fit_s is the primary metric: it covers the Lloyd iterations **only**. Loading
+(load_s), preprocessing (preprocess_s), k-means++ (init_s) and the final
+inertia/label validation (validation_s) are measured separately and never
+folded into fit_s.
+
+For MPI, fit_s is the **maximum** elapsed fitting time across ranks
+(MPI_Wtime measured around the iteration loop), never a sum of rank times. The
+minimum across ranks and their difference (rank imbalance) are reported too.
+
+### Phase instrumentation (E5)
+
+Every implementation reports the same phase keys:
+
+| Key | Meaning |
+|---|---|
+| local_compute_s | nearest-centroid assignment + local accumulation (max across ranks) |
+| mpi_reduction_s | MPI_Allreduce time: collective latency **including** waiting for slower ranks, not pure network transfer |
+| thread_reduction_s | folding thread-local totals into rank-local totals |
+| centroid_update_s | mean computation over K x D |
+| distribution_s | row scatter/broadcast + initial centroid broadcast + (weak mode) local generation |
+| fit_min_s, fit_imbalance_s | rank spread, the load-imbalance indicator |
 
 ## Build
 
-The Linux commands use the normal MPI compiler wrapper:
+    make            # all CPU programs plus kmeans_metal on macOS
+    make cpu        # serial, OpenMP, MPI, hybrid
+    make gpu        # Apple Metal (macOS only)
+    make test       # CPU cross-checks, weak-scaling checks, Metal checks
+    make smoke      # 30-second end-to-end check
 
-```sh
-g++ -O3 -std=c++17 -DNDEBUG kmeans_serial.cpp -o kmeans_serial
-g++ -O3 -std=c++17 -DNDEBUG -fopenmp kmeans_openmp.cpp -o kmeans_openmp
-mpicxx -O3 -std=c++17 -DNDEBUG kmeans_mpi.cpp -o kmeans_mpi
-mpicxx -O3 -std=c++17 -DNDEBUG -fopenmp kmeans_hybrid.cpp -o kmeans_hybrid
-```
+Local toolchain used for the measurements in docs/: Apple clang 21, OpenMPI
+5.0.2 (Homebrew), -O3 -std=c++17 -DNDEBUG.
 
-The provided `Makefile` builds all four and has a Darwin-specific OpenMP
-path for a Homebrew `libomp` installation:
+On macOS the Makefile picks up Homebrew libomp automatically. The Metal program
+needs only the Command Line Tools: the shader is compiled from an embedded
+source string at run time (see gpu/metal/embed_source.py), so xcrun metal and
+full Xcode are not required. Override CXX, MPICXX, BASE_FLAGS, OPENMP_FLAGS or
+OPENMP_LIBS as needed, and record whatever you use in BENCH_FLAGS so the CSV
+rows carry the real flags.
 
-```sh
-make
-make test
-```
+## Run
 
-Use `CXX`, `MPICXX`, `BASE_FLAGS`, or `OPENMP_FLAGS` to override local
-compiler settings. Match compiler optimization and architecture flags when
-collecting scaling results.
+    DATA.csv [K=7] [MAX_ITER=100] [SEED=42]
+        [--fixed-iterations]        run exactly MAX_ITER iterations (benchmarking)
+        [--centroids FILE]          write the final centroid matrix at full precision
+        [--rows N]                  systematic subsample of N observations
+        [--init-centroids FILE]     use fixed initial centroids instead of k-means++
+        [--weak-per-rank R]         MPI only: deterministic weak-scaling workload
+        [--source-bin FILE]         MPI weak mode: cached binary source instead of a broadcast
+        [--dump-generated FILE]     MPI weak mode: write the generated rows (verification)
 
-## Execution
+kmeans_metal adds --mode assign|full, --bench-overhead and --validate.
 
-The positional arguments are:
+    ./kmeans_serial data/covtype.data 7 30 42 --fixed-iterations --rows 100000
+    OMP_NUM_THREADS=4 ./kmeans_openmp data/covtype.data 7 30 42 --fixed-iterations
+    mpirun -np 4 ./kmeans_mpi data/covtype.data 7 30 42 --fixed-iterations
+    OMP_NUM_THREADS=2 mpirun -np 4 ./kmeans_hybrid data/covtype.data 7 30 42 --fixed-iterations
+    ./kmeans_metal data/covtype.data 7 30 42 --rows 100000 --fixed-iterations --mode full
 
-```text
-DATA.csv [K=7] [MAX_ITER=100] [SEED=42]
-```
+--rows N keeps N evenly spaced rows of the loaded file, so every implementation
+and every rank count sees the same subset in the same order. Preprocessing is
+then recomputed on that subset, which is the correct definition of K-means on a
+smaller dataset.
 
-Examples:
+## Deterministic weak-scaling generation (E3)
 
-```sh
-./kmeans_serial data/covtype.data 7 100 42
-OMP_NUM_THREADS=4 ./kmeans_openmp data/covtype.data 7 100 42
-mpirun -np 4 ./kmeans_mpi data/covtype.data 7 100 42
-OMP_NUM_THREADS=4 mpirun -np 2 ./kmeans_hybrid data/covtype.data 7 100 42
-```
+Weak scaling needs a larger logical dataset per rank without writing expanded
+files. kmeans_mpi --weak-per-rank R builds rank r's contiguous block of global
+indices [r*R, (r+1)*R) in memory from the preprocessed Covertype source:
 
-Two optional flags are supported by all four programs:
+    source_index(seed, gi) =
+        splitmix64( gi * 0x9E3779B97F4A7C15 ^ splitmix64(seed ^ 0x5DEECE66D) ) mod source_rows
 
-```text
---fixed-iterations    Execute exactly MAX_ITER iterations; do not stop early.
---centroids FILE      Write the final centroid matrix at full precision.
-```
+splitmix64 is the standard fixed integer mixer (no std::hash, no
+library-dependent behaviour), implemented once in kmeans_common.hpp and
+re-implemented independently in tests/run_weak_scaling_tests.py, which verifies
+the materialised rows to 1e-12. The mapping depends only on
+(seed, global index, source rows), never on the rank count, so 1 rank x 6000 and
+4 ranks x 1500 produce the identical logical dataset and the identical
+clustering. The resulting work is an **expanded benchmark workload built by
+resampling real Covertype rows**, not new observations.
 
-For example:
+Initial centroids are k-means++ on the *source* Covertype matrix, so every rank
+count starts from the same centroids. The source matrix reaches the ranks either
+by one chunked MPI_Bcast (default) or by a cached binary file (--source-bin),
+which avoids a 252 MB broadcast at high rank counts. Both paths are measured and
+reported separately (source_bcast_s, load_s, generation_s).
 
-```sh
-mpirun -np 4 ./kmeans_mpi data/covtype.data 7 100 42 \
-  --fixed-iterations --centroids mpi-centroids.csv
-```
+## Experiments and tooling
 
-Centroid output files contain K rows and 54 comma-separated coordinates.
-Only MPI rank 0 writes this file. The original default behavior is unchanged
-when the flags are omitted.
+| Script | Experiment |
+|---|---|
+| scripts/run_e1.py | E1 serial scaling over N and K |
+| scripts/run_mpi.py --experiment strong | E2 strong scaling |
+| scripts/run_mpi.py --experiment weak | E3 weak scaling |
+| scripts/run_mpi.py --experiment hybrid --layouts 72x1,36x2,... | E4 rank/thread layouts |
+| scripts/run_metal.py | E6 Metal |
+| scripts/analyze.py | all figures + results/SUMMARY.md |
+| scripts/smoke_test.py | build + cross-implementation agreement |
 
-## Common algorithm
+Each runner probes the environment (host, CPU model, cores, compiler, MPI
+version, flags), executes the configuration, parses the machine-readable output,
+and **appends** one row per repetition to results/*.csv. Failed or incomplete
+runs are refused and logged to results/failures.log; an existing CSV is never
+truncated, and a schema mismatch aborts instead of mixing data.
 
-Rank 0 or the serial process loads the complete dataset and validates every
-row. Columns 0 through 53 are stored in a contiguous row-major
-`std::vector<double>`; column 54 is discarded. `scale_continuous()` uses the
-existing online mean/M2 calculation, divides by population standard
-deviation, and maps a zero-variance feature to zero. The remaining 44 binary
-features are unchanged.
+    python3 scripts/run_e1.py --repetitions 3
+    python3 scripts/run_mpi.py --experiment strong --ranks 1,2,4,8 --repetitions 3
+    python3 scripts/run_mpi.py --experiment weak   --ranks 1,2,4,8 --per-rank 50000 --repetitions 3
+    python3 scripts/run_mpi.py --experiment hybrid --layouts 4x1,4x2,2x2,2x4,1x4 --repetitions 3
+    python3 scripts/run_metal.py --rows 20000,100000,400000 --repetitions 3
+    python3 scripts/analyze.py
 
-Rank 0 performs the existing seeded K-means++ initialization over the full
-preprocessed dataset. Because this happens before distribution, every rank
-starts from bitwise-identical centroids. During each Lloyd iteration, points
-are assigned to the nearest centroid, nonempty clusters are replaced by the
-arithmetic mean of their observations, and empty clusters retain their
-previous centroid. Convergence means that the globally reduced number of
-changed assignments is zero.
+scripts/analyze.py writes figures/*.png and results/SUMMARY.md. An experiment
+with no measured data produces a figure that says **PENDING**; no value is ever
+invented or interpolated.
 
-## Pure MPI design
+## Tests
 
-### Observation ownership
+    make test
 
-Rank 0 owns the complete matrix only for loading, preprocessing,
-initialization, and the initial distribution. It partitions rows into
-contiguous near-equal subsets:
+* tests/run_tests.py - serial/OpenMP/MPI/hybrid equality on a synthetic mixture
+  and on real Covertype: K = 1 and K = 7, fixed-iteration and convergence
+  stopping, partitions that do not divide the row count, more ranks than
+  observations, several thread counts, empty-cluster policy.
+* tests/run_weak_scaling_tests.py - the documented index mapping reproduced by
+  an independent implementation, rank-count independence of the logical
+  dataset, repeat determinism, cached-source equivalence.
+* tests/run_metal_tests.py - Stage A/B agreement, GPU-vs-CPU label agreement and
+  inertia tolerance, K = 1, convergence decision, determinism. Skips cleanly when
+  Metal is unavailable.
 
-```text
-base = rows / ranks
-remainder = rows % ranks
-local_rows(rank) = base + (rank < remainder ? 1 : 0)
-```
+Float reductions across MPI ranks or GPU threads are **not** bitwise identical
+to serial summation; the tests therefore compare centroids, inertia, cluster
+sizes and label hashes with tolerances, and treat a differing clustering as a
+failure until it is explained.
 
-`MPI_Scatterv` sends each row block, including its `local_rows * 54` double
-elements. This supports any positive number of ranks and row counts that are
-not divisible by the rank count. Rank 0 then releases its complete matrix;
-non-root ranks never hold all observations.
+## HPC
 
-### Collective operations
+jobs/ holds Atlas (PBS Pro) and Vanda (SLURM) submission scripts, a required
+cluster.env filled from jobs/probe_cluster.sh, and the 256-core submission plan.
+Nothing there has been submitted; see jobs/README.md and docs/HPC_LOG.md.
 
-Every rank executes the same collective sequence:
+## Repository layout
 
-1. Broadcast the row count.
-2. `MPI_Scatterv` the preprocessed observation rows.
-3. `MPI_Bcast` the initial centroid array.
-4. In each iteration, `MPI_Allreduce` cluster feature sums with `MPI_SUM`.
-5. In each iteration, `MPI_Allreduce` cluster counts and the local changed
-   label count with `MPI_SUM`.
-6. After fitting, reduce local inertia once with `MPI_SUM`.
-7. `MPI_Gatherv` final labels in rank order so rank 0 can reproduce the serial
-   label hash without communicating labels every iteration.
-
-Each rank computes the same updated centroids from the global sums and
-counts. Centroid updates therefore require an all-rank barrier-like
-collective every iteration. Labels remain local until final validation.
-
-## Hybrid MPI + OpenMP design
-
-The hybrid uses `MPI_Init_thread` to request `MPI_THREAD_FUNNELED` and rejects
-a runtime that provides less support. All MPI calls are made by the main
-thread, outside OpenMP parallel regions.
-
-The data distribution is identical to the pure MPI implementation. Within
-each rank, `OMP_NUM_THREADS` controls an OpenMP team:
-
-1. Allocate a centroid-sum block and a count block per thread.
-2. Use `#pragma omp parallel` and `#pragma omp for schedule(static)` over the
-   rank's local observations.
-3. Each thread updates only its own labels and private totals. Centroids are
-   read-only during assignment, so the loop has no atomics or critical
-   sections.
-4. After the implicit parallel-region barrier, the main thread combines
-   thread totals in fixed thread-ID order.
-5. `MPI_Allreduce` combines those rank-local totals into global totals.
-6. Every rank performs the same centroid update from the global result.
-
-This is the two-level reduction. Level 1 is a deterministic sequential
-reduction of OpenMP thread accumulators. Level 2 is MPI all-reduction across
-ranks. The reported `threads` value is the actual OpenMP team size after
-dynamic team resizing is disabled; `total_workers` is summed across ranks.
-Configurations such as `1x4`, `2x2`, `4x1`, `2x4`, and `4x4` are supported.
-
-## Why the parallel versions are not embarrassingly parallel
-
-Distance calculations and local accumulation are independent across
-observations, which is the parallel part. A centroid, however, must be
-updated from all observations in its cluster, including observations owned
-by other MPI ranks. The cluster sums, counts, and convergence decision must
-therefore be combined globally after every iteration, and every rank must
-finish reading the old centroids before the next iteration starts. Those
-global reductions and synchronization are the distributed-memory bottleneck;
-additional OpenMP barriers add a smaller local overhead.
-
-## Output and timing definitions
-
-Only rank 0 prints the final human-readable values, cluster sizes, label hash,
-CSV header, and CSV record. The common fields are:
-
-- `rows`, `features`, `k`, `max_iter`, `seed`
-- `iterations`, `inertia`
-- `load_s`, `preprocess_s`, `init_s`, `fit_s`, `validation_s`, `total_s`
-- `stopping_mode`, `converged`
-- `cluster_sizes`, `label_hash`
-
-MPI programs additionally print:
-
-- `implementation`: `mpi` or `hybrid`
-- `ranks`, `threads`, `total_workers`
-- `distribution_s`
-- `mpi_reduction_s`
-- `local_compute_s`
-
-Timing scopes are:
-
-- `load_s`, `preprocess_s`, and `init_s` are rank-0-only serial phases.
-- `distribution_s` is wall time from the start of distribution through the
-  row scatter and centroid broadcast, reported as the maximum across ranks.
-- `fit_s` is the maximum wall-clock duration of the complete Lloyd loop,
-  including local assignment, both reductions, synchronization, and centroid
-  updates. It is the primary performance metric.
-- `local_compute_s` is cumulative rank-local assignment/accumulation time,
-  including the hybrid's OpenMP thread reduction, reported as the maximum.
-- `mpi_reduction_s` is cumulative time spent inside the per-iteration MPI
-  all-reductions, reported as the maximum. It excludes collective timing
-  reductions and final validation.
-- `validation_s` covers final local inertia, inertia reduction, and label
-  gathering, reported as the maximum.
-- `total_s` is the maximum rank wall time from entry to fitting into `run()`
-  through validation. It excludes final text/CSV printing.
-
-These separately measured components are not assumed to sum exactly to
-`fit_s`; barriers, waits, resets, centroid arithmetic, and timing calls are
-also present.
-
-The CSV header is:
-
-```text
-implementation,ranks,threads,total_workers,rows,features,k,max_iter,iterations,fit_s,sse,converged,stopping_mode,distribution_s,mpi_reduction_s,local_compute_s
-```
-
-The final assignments are represented by `label_hash`, which follows the
-original row order and is recomputed after gathering labels. Cluster sizes
-also describe the complete dataset, not a single rank.
-
-## Correctness tests
-
-Build all binaries, then run:
-
-```sh
-python3 tests/run_tests.py
-```
-
-The test script compares final inertia, all centroid coordinates, cluster
-sizes, iteration count, convergence status, stopping mode, and the complete
-assignment sequence through `label_hash`. It uses numerical tolerances for
-floating-point values and exact checks for counts and labels. The suite
-covers:
-
-- A deterministic 503-row mixture dataset.
-- Real `data/covtype.data`.
-- K=1 and K=7.
-- Row counts not divisible by 3 or 4 MPI ranks.
-- OpenMP thread counts 1, 2, and 4.
-- MPI rank counts 1, 2, 3, and 4.
-- Hybrid configurations `1x4`, `2x2`, and `4x1`, plus `2x4` when at least
-  eight CPU threads are available.
-- More MPI ranks than observations, with zero-row ranks.
-- Default convergence and fixed `MAX_ITER` stopping.
-- A direct unit test of the empty-cluster centroid path.
-
-`python3 tests/run_tests.py --skip-mpi` runs the serial/OpenMP subset when MPI
-is unavailable. The full suite fails clearly rather than silently skipping
-missing MPI or hybrid binaries.
-
-### Executed validation results
-
-The full suite was executed locally on 2026-11-04 with Apple Clang 21,
-MPICH 5.0.2, and Homebrew libomp 18.1.3. All checks passed:
-
-- The small K=7 fixed-iteration matrix matched across serial, OpenMP,
-  MPI, and all tested hybrid layouts. Maximum centroid difference was
-  `1.110e-15`.
-- Real Covertype with 581,012 rows, K=7, seed 42, and five fixed iterations
-  matched across serial, OpenMP 1x2, MPI 3x1, and hybrid 2x2. Maximum
-  centroid difference was `2.706e-13`.
-- Real Covertype K=1 and full K=7 convergence runs matched in iteration
-  count, inertia, cluster sizes, convergence status, and label hash.
-- The K=7 full-convergence reference reached 91 iterations with inertia
-  `3712497.960091` and label hash `9039984004050467668`.
-- The direct empty-cluster test confirmed that a zero-count cluster keeps
-  its previous centroid while a nonempty cluster receives its arithmetic
-  mean.
-
-These are correctness checks, not final Atlas/Vanda scaling measurements.
-
-## Known limitations
-
-- Loading, preprocessing, and K-means++ remain serial on rank 0. This keeps
-  initialization exactly comparable and is important because the dataset is
-  loaded once rather than ingested in parallel.
-- Every iteration requires two collective reductions. A production system
-  might combine the sum, count, and changed-label payloads or use persistent
-  collectives, but those optimizations are intentionally omitted for
-  readability.
-- Floating-point reduction order can change low-order bits when the number
-  of ranks or threads changes. This can eventually alter a tie or convergence
-  iteration on a near-boundary dataset. Fixed-iteration mode is provided for
-  stricter performance comparisons.
-- Final labels are gathered once for hash validation. Labels are not
-  replicated during the fitting loop.
-- Performance depends on the MPI implementation, process binding, thread
-  affinity, memory bandwidth, and node topology. Run repeated trials with
-  matched builds and avoid oversubscribing ranks times threads beyond the
-  available CPU resources.
+    kmeans_common.hpp        shared algorithm, options, timing and generator code
+    kmeans_*.cpp             the four CPU programs
+    gpu/metal/               Metal shader, embedded-source generator, Objective-C++ driver
+    scripts/                 benchmark runners, analysis, smoke test
+    jobs/                    Atlas/Vanda submission kit
+    tests/                   correctness, weak-scaling and Metal tests
+    results/                 measured CSV records + SUMMARY.md
+    figures/                 generated plots
+    docs/                    experiment manifest, implementation report, HPC log
+    data/                    Covertype data set + documentation

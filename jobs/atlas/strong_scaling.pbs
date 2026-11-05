@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+#PBS -N kmeans-strong
+#PBS -j oe
+#PBS -l walltime=01:00:00
+#PBS -l select=1:ncpus=8:mpiprocs=8:ompthreads=1
+#
+# E2 strong scaling. The select line above is a floor for a smoke run; the real
+# allocation is passed by jobs/atlas/submit.sh, for example
+#   -l select=4:ncpus=64:mpiprocs=64:ompthreads=1     (256 cores)
+#
+# One job runs the whole rank sweep so that every configuration sees the same
+# node set, interconnect and filesystem cache state.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/common.sh
+preflight
+load_modules
+build_if_needed
+
+export OMP_NUM_THREADS=1
+export MPI_LAUNCHER="$MPI_LAUNCHER"
+export MPI_FLAGS=$(mpi_flags)
+
+RANKS=$(printenv RANKS || echo "1,4,16,32,64,128,256")
+REPS=$(printenv REPS || echo "$REPETITIONS")
+OUT="$RESULTS_DIR/e2_strong_$PBS_JOBID.csv"
+
+echo "ranks=$RANKS reps=$REPS out=$OUT"
+python3 scripts/run_mpi.py --experiment strong --ranks "$RANKS" --repetitions "$REPS" \
+  --max-iter 30 --k 7 --results "$OUT"
+status=$?
+echo "runner exit=$status"
+grep -c '^csv=' "$OUT" 2>/dev/null || true
+exit $status

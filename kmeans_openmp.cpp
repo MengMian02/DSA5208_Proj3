@@ -1,165 +1,42 @@
-#include <algorithm>
-#include <chrono>
-#include <cmath>
-#include <cstdlib>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <limits>
-#include <random>
-#include <stdexcept>
-#include <string>
-#include <vector>
+#include "kmeans_common.hpp"
+
 #include <omp.h>
 
-constexpr int D = 54;
-using Clock = std::chrono::steady_clock;
-double seconds(Clock::time_point a, Clock::time_point b) {
-    return std::chrono::duration<double>(b - a).count();
-}
-
-std::vector<double> read_data(const std::string& path) {
-    std::ifstream in(path);
-    if (!in) throw std::runtime_error("Cannot open: " + path);
-    std::vector<double> x;
-    std::string line;
-    size_t rows = 0;
-    while (std::getline(in, line)) {
-        if (line.empty()) continue;
-        const char* p = line.c_str();
-        for (int j = 0; j < D + 1; ++j) {
-            char* end = nullptr;
-            double value = std::strtod(p, &end);
-            if (end == p || !std::isfinite(value))
-                throw std::runtime_error("Invalid number on row " + std::to_string(rows + 1));
-            if (j < D) x.push_back(value); // Column 55 is the known class label.
-            if (j < D && *end != ',')
-                throw std::runtime_error("Missing column on row " + std::to_string(rows + 1));
-            if (j == D && *end != '\0' && *end != '\r')
-                throw std::runtime_error("Extra column on row " + std::to_string(rows + 1));
-            p = end + (j < D ? 1 : 0);
-        }
-        ++rows;
-    }
-    if (rows == 0) throw std::runtime_error("Empty dataset");
-    return x;
-}
-
-void scale_continuous(std::vector<double>& x) {
-    const size_t n = x.size() / D;
-    for (int j = 0; j < 10; ++j) {
-        double mean = 0.0, m2 = 0.0;
-        for (size_t i = 0; i < n; ++i) {
-            const double v = x[i * D + j];
-            const double delta = v - mean;
-            mean += delta / double(i + 1);
-            m2 += delta * (v - mean);
-        }
-        const double sd = std::sqrt(m2 / double(n));
-        for (size_t i = 0; i < n; ++i)
-            x[i * D + j] = sd > 0 ? (x[i * D + j] - mean) / sd : 0.0;
-    }
-}
-
-double distance2(const double* a, const double* b) {
-    double sum = 0.0;
-    for (int j = 0; j < D; ++j) {
-        const double diff = a[j] - b[j];
-        sum += diff * diff;
-    }
-    return sum;
-}
-
-std::vector<double> initialize(const std::vector<double>& x, int k, uint64_t seed) {
-    const size_t n = x.size() / D;
-    std::mt19937_64 rng(seed);
-    std::uniform_int_distribution<size_t> first(0, n - 1);
-    std::vector<double> c(size_t(k) * D), nearest(n, std::numeric_limits<double>::infinity());
-    const size_t first_index = first(rng);
-    std::copy_n(&x[first_index * D], D, c.data());
-    for (int cluster = 1; cluster < k; ++cluster) {
-        double total = 0.0;
-        for (size_t i = 0; i < n; ++i) {
-            nearest[i] = std::min(nearest[i], distance2(&x[i * D], &c[size_t(cluster - 1) * D]));
-            total += nearest[i];
-        }
-        if (total <= 0.0) throw std::runtime_error("Fewer distinct points than K");
-        std::uniform_real_distribution<double> draw(0.0, total);
-        const double target = draw(rng);
-        double cumulative = 0.0;
-        size_t selected = n - 1;
-        for (size_t i = 0; i < n; ++i) {
-            cumulative += nearest[i];
-            if (cumulative >= target) { selected = i; break; }
-        }
-        std::copy_n(&x[selected * D], D, &c[size_t(cluster) * D]);
-    }
-    return c;
-}
-
-double final_inertia(const std::vector<double>& x, const std::vector<double>& c, int k) {
-    double sse = 0.0;
-    for (size_t i = 0, n = x.size() / D; i < n; ++i) {
-        double best = std::numeric_limits<double>::infinity();
-        for (int cluster = 0; cluster < k; ++cluster)
-            best = std::min(best, distance2(&x[i * D], &c[size_t(cluster) * D]));
-        sse += best;
-    }
-    return sse;
-}
-
-void write_centroids(const std::string& path, const std::vector<double>& c, int k) {
-    std::ofstream out(path);
-    if (!out) throw std::runtime_error("Cannot open centroid output: " + path);
-    out << std::setprecision(17);
-    for (int cluster = 0; cluster < k; ++cluster) {
-        for (int j = 0; j < D; ++j)
-            out << (j ? "," : "") << c[size_t(cluster) * D + j];
-        out << '\n';
-    }
-}
+#include <exception>
+#include <iostream>
 
 int main(int argc, char** argv) {
     try {
-        if (argc < 2) {
-            std::cerr << "Usage: kmeans_openmp DATA.csv [K=7] [MAX_ITER=100] [SEED=42]"
-                         " [--fixed-iterations] [--centroids FILE]\n";
-            return 2;
-        }
-        const int k = argc > 2 ? std::stoi(argv[2]) : 7;
-        const int max_iter = argc > 3 ? std::stoi(argv[3]) : 100;
-        const uint64_t seed = argc > 4 ? std::stoull(argv[4]) : 42;
-        bool fixed_iterations = false;
-        std::string centroid_path;
-        for (int i = 5; i < argc; ++i) {
-            const std::string option = argv[i];
-            if (option == "--fixed-iterations") {
-                fixed_iterations = true;
-            } else if (option == "--centroids" && i + 1 < argc) {
-                centroid_path = argv[++i];
-            } else {
-                throw std::runtime_error("Unknown or incomplete option: " + option);
-            }
-        }
-        if (k < 1 || max_iter < 1) throw std::runtime_error("K and MAX_ITER must be positive");
-        auto t0 = Clock::now();
-        std::vector<double> x = read_data(argv[1]);
-        auto t1 = Clock::now();
-        const size_t n = x.size() / D;
-        if (size_t(k) > n) throw std::runtime_error("K exceeds number of rows");
+        const Options options = parse_options(argc, argv, "kmeans_openmp");
+        const int k = options.k;
+        const int max_iter = options.max_iter;
+        const uint64_t seed = options.seed;
+
+        const auto t0 = Clock::now();
+        std::vector<double> x = read_data(options.data_path, options.rows);
+        const auto t1 = Clock::now();
+        const uint64_t n = x.size() / D;
+        if (uint64_t(k) > n) throw std::runtime_error("K exceeds number of rows");
         scale_continuous(x);
-        auto t2 = Clock::now();
-        std::vector<double> c = initialize(x, k, seed);
-        auto t3 = Clock::now();
+        const auto t2 = Clock::now();
+        std::vector<double> c = options.init_centroid_path.empty()
+                                    ? initialize(x, k, seed)
+                                    : read_centroids(options.init_centroid_path, k);
+        const auto t3 = Clock::now();
+
+        omp_set_dynamic(0);
         std::vector<int> labels(n, -1);
         std::vector<double> sums(size_t(k) * D);
-        std::vector<size_t> counts(k);
+        std::vector<uint64_t> counts(k);
         const int threads = omp_get_max_threads(); // Controlled by OMP_NUM_THREADS.
-        std::vector<double> local_sums(size_t(threads) * k * D);
-        std::vector<size_t> local_counts(size_t(threads) * k);
-        std::vector<size_t> local_changed(threads);
+        std::vector<double> local_sums(size_t(threads) * size_t(k) * D);
+        std::vector<uint64_t> local_counts(size_t(threads) * size_t(k));
+        std::vector<size_t> local_changed(static_cast<size_t>(threads));
         int iterations = 0;
         bool converged = false;
+        double assign_accumulate_s = 0.0;
+        double thread_reduction_s = 0.0;
+        double centroid_update_s = 0.0;
         for (int iter = 0; iter < max_iter; ++iter) {
             std::fill(sums.begin(), sums.end(), 0.0);
             std::fill(counts.begin(), counts.end(), 0);
@@ -167,80 +44,89 @@ int main(int argc, char** argv) {
             std::fill(local_counts.begin(), local_counts.end(), 0);
             std::fill(local_changed.begin(), local_changed.end(), 0);
             size_t changed = 0;
+            const auto assign_start = Clock::now();
             // Centroids are read-only here; each point's label has one writer.
             // Cluster totals are private to each thread to avoid races/atomics.
 #pragma omp parallel
             {
                 const int tid = omp_get_thread_num();
-                double* thread_sums = &local_sums[size_t(tid) * k * D];
-                size_t* thread_counts = &local_counts[size_t(tid) * k];
+                double* thread_sums = &local_sums[size_t(tid) * size_t(k) * D];
+                uint64_t* thread_counts = &local_counts[size_t(tid) * size_t(k)];
                 size_t thread_changed = 0;
 #pragma omp for schedule(static)
-                for (size_t i = 0; i < n; ++i) {
-                int best_id = 0;
-                double best = distance2(&x[i * D], c.data());
-                for (int cluster = 1; cluster < k; ++cluster) {
-                    const double d = distance2(&x[i * D], &c[size_t(cluster) * D]);
-                    if (d < best) { best = d; best_id = cluster; }
+                for (int64_t i = 0; i < int64_t(n); ++i) {
+                    const double* point = &x[size_t(i) * D];
+                    int best_id = 0;
+                    double best = distance2(point, c.data());
+                    for (int cluster = 1; cluster < k; ++cluster) {
+                        const double d = distance2(point, &c[size_t(cluster) * D]);
+                        if (d < best) { best = d; best_id = cluster; }
+                    }
+                    thread_changed += labels[size_t(i)] != best_id;
+                    labels[size_t(i)] = best_id;
+                    ++thread_counts[best_id];
+                    for (int j = 0; j < D; ++j)
+                        thread_sums[size_t(best_id) * D + j] += point[j];
                 }
-                thread_changed += labels[i] != best_id;
-                labels[i] = best_id;
-                ++thread_counts[best_id];
-                for (int j = 0; j < D; ++j) thread_sums[size_t(best_id) * D + j] += x[i * D + j];
-                }
-                local_changed[tid] = thread_changed;
+                local_changed[size_t(tid)] = thread_changed;
             }
+            assign_accumulate_s += seconds(assign_start, Clock::now());
+            const auto reduce_start = Clock::now();
             // Implicit barrier at the end of the parallel region. Fixed thread
-            // order makes the reduction deterministic for a fixed thread count.
+            // order keeps the reduction deterministic for a fixed thread count.
             for (int tid = 0; tid < threads; ++tid) {
-                changed += local_changed[tid];
+                changed += local_changed[size_t(tid)];
                 for (int cluster = 0; cluster < k; ++cluster) {
-                    counts[cluster] += local_counts[size_t(tid) * k + cluster];
+                    counts[size_t(cluster)] += local_counts[size_t(tid) * size_t(k) + size_t(cluster)];
                     for (int j = 0; j < D; ++j)
-                        sums[size_t(cluster) * D + j] += local_sums[(size_t(tid) * k + cluster) * D + j];
+                        sums[size_t(cluster) * D + j] +=
+                            local_sums[(size_t(tid) * size_t(k) + size_t(cluster)) * D + size_t(j)];
                 }
             }
-            for (int cluster = 0; cluster < k; ++cluster)
-                if (counts[cluster])
-                    for (int j = 0; j < D; ++j)
-                        c[size_t(cluster) * D + j] = sums[size_t(cluster) * D + j] / double(counts[cluster]);
+            thread_reduction_s += seconds(reduce_start, Clock::now());
+            const auto update_start = Clock::now();
+            update_centroids(c, sums, counts, k);
+            centroid_update_s += seconds(update_start, Clock::now());
             iterations = iter + 1;
             if (changed == 0) {
                 converged = true;
-                if (!fixed_iterations) break;
+                if (!options.fixed_iterations) break;
             }
         }
-        auto t4 = Clock::now();
+        const auto t4 = Clock::now();
         const double inertia = final_inertia(x, c, k);
-        auto t5 = Clock::now();
-        if (!centroid_path.empty()) write_centroids(centroid_path, c, k);
-        std::cout << std::fixed << std::setprecision(6)
-                  << "rows=" << n << " features=" << D << " k=" << k
-                  << " max_iter=" << max_iter << " seed=" << seed << '\n'
-                  << "iterations=" << iterations << " inertia=" << inertia << '\n'
-                  << "load_s=" << seconds(t0, t1) << " preprocess_s=" << seconds(t1, t2)
-                  << " init_s=" << seconds(t2, t3) << " fit_s=" << seconds(t3, t4)
-                  << " validation_s=" << seconds(t4, t5)
-                  << " total_s=" << seconds(t0, t5) << '\n';
-        std::cout << "implementation=openmp threads=" << threads
-                  << " stopping_mode=" << (fixed_iterations ? "fixed_iterations" : "convergence")
-                  << " converged=" << (converged ? "true" : "false") << '\n';
-        std::cout << "cluster_sizes=";
-        for (int cluster = 0; cluster < k; ++cluster)
-            std::cout << (cluster ? "," : "") << counts[cluster];
-        std::cout << '\n';
-        uint64_t label_hash = 1469598103934665603ULL;
-        for (int label : labels) {
-            label_hash ^= uint64_t(label + 1);
-            label_hash *= 1099511628211ULL;
-        }
-        std::cout << "label_hash=" << label_hash << '\n';
-        std::cout << "csv_header=implementation,threads,rows,features,k,iterations,fit_s,sse,converged\n"
-                  << "csv=openmp," << threads << ',' << n << ',' << D << ',' << k << ','
-                  << iterations << ',' << seconds(t3, t4) << ',' << inertia << ','
-                  << (converged ? "true" : "false") << '\n';
+        const auto t5 = Clock::now();
+        if (!options.centroid_path.empty()) write_centroids(options.centroid_path, c, k);
+
+        const double fit_s = seconds(t3, t4);
+        print_dataset_line(n, k, max_iter, seed);
+        print_iteration_line(iterations, inertia);
+        print_timing_line(seconds(t0, t1), seconds(t1, t2), seconds(t2, t3), fit_s,
+                          seconds(t4, t5), seconds(t0, t5));
+        std::cout << "implementation=openmp ranks=1 threads=" << threads
+                  << " total_workers=" << threads
+                  << " stopping_mode=" << (options.fixed_iterations ? "fixed_iterations" : "convergence")
+                  << " converged=" << bool_str(converged) << '\n';
+        std::cout << "distribution_s=0 mpi_reduction_s=0 local_compute_s=" << assign_accumulate_s
+                  << " thread_reduction_s=" << thread_reduction_s
+                  << " centroid_update_s=" << centroid_update_s
+                  << " fit_min_s=" << fit_s << " fit_imbalance_s=0"
+                  << " obs_per_rank=" << n << " weak=0" << '\n';
+        print_cluster_sizes(counts, k);
+        std::cout << "label_hash=" << label_hash(labels) << '\n';
+        std::cout << "csv_header=implementation,ranks,threads,total_workers,rows,features,k,"
+                     "max_iter,iterations,fit_s,sse,converged,stopping_mode,distribution_s,"
+                     "mpi_reduction_s,local_compute_s,thread_reduction_s,centroid_update_s,"
+                     "fit_min_s,fit_imbalance_s,obs_per_rank,weak\n"
+                  << "csv=openmp,1," << threads << ',' << threads << ',' << n << ',' << D << ','
+                  << k << ',' << max_iter << ',' << iterations << ',' << fit_s << ','
+                  << inertia << ',' << bool_str(converged) << ','
+                  << (options.fixed_iterations ? "fixed_iterations" : "convergence")
+                  << ",0,0," << assign_accumulate_s << ',' << thread_reduction_s << ','
+                  << centroid_update_s << ',' << fit_s << ",0," << n << ",0\n";
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << '\n';
         return 1;
     }
+    return 0;
 }

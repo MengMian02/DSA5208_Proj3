@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+#PBS -N kmeans-serial
+#PBS -j oe
+#PBS -l walltime=01:00:00
+#PBS -l select=1:ncpus=1:mpiprocs=1:ompthreads=1
+#
+# E1 serial scaling, executed on the cluster so that the report can quote
+# Atlas/Vanda runtimes for the serial baseline too.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/common.sh
+preflight
+load_modules
+build_if_needed
+
+OUT="$RESULTS_DIR/e1_serial_$PBS_JOBID.csv"
+REPS=$(printenv REPS || echo "$REPETITIONS")
+python3 scripts/run_e1.py --implementation serial --grid both --repetitions "$REPS" \
+  --max-iter 30 --results "$OUT"
+status=$?
+echo "runner exit=$status"
+exit $status

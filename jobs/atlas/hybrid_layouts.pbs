@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#PBS -N kmeans-hybrid
+#PBS -j oe
+#PBS -l walltime=01:00:00
+#PBS -l select=1:ncpus=8:mpiprocs=8:ompthreads=8
+#
+# E4 hybrid MPI+OpenMP at an equal core budget. The allocation must equal the
+# core budget of every layout: with -l select=1:ncpus=72 (or 2:ncpus=36) the
+# layouts 72x1, 36x2, 18x4, 9x8, 4x18 and 1x72 all use 72 cores.
+# LAYOUTS is passed by jobs/atlas/submit.sh.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/common.sh
+preflight
+load_modules
+build_if_needed
+
+export OMP_PROC_BIND=close
+export OMP_PLACES=cores
+export MPI_LAUNCHER="$MPI_LAUNCHER"
+export MPI_FLAGS=$(mpi_flags)
+
+LAYOUTS=$(printenv LAYOUTS || echo "4x1,2x2,1x4")
+REPS=$(printenv REPS || echo "$REPETITIONS")
+OUT="$RESULTS_DIR/e4_hybrid_$PBS_JOBID.csv"
+
+echo "layouts=$LAYOUTS reps=$REPS out=$OUT"
+python3 scripts/run_mpi.py --experiment hybrid --layouts "$LAYOUTS" --repetitions "$REPS" \
+  --max-iter 30 --k 7 --results "$OUT"
+status=$?
+echo "runner exit=$status"
+exit $status
