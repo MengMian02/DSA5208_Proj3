@@ -108,15 +108,39 @@ double final_inertia(const std::vector<double>& x, const std::vector<double>& c,
     return sse;
 }
 
+void write_centroids(const std::string& path, const std::vector<double>& c, int k) {
+    std::ofstream out(path);
+    if (!out) throw std::runtime_error("Cannot open centroid output: " + path);
+    out << std::setprecision(17);
+    for (int cluster = 0; cluster < k; ++cluster) {
+        for (int j = 0; j < D; ++j)
+            out << (j ? "," : "") << c[size_t(cluster) * D + j];
+        out << '\n';
+    }
+}
+
 int main(int argc, char** argv) {
     try {
-        if (argc < 2 || argc > 5) {
-            std::cerr << "Usage: kmeans_openmp DATA.csv [K=7] [MAX_ITER=100] [SEED=42]\n";
+        if (argc < 2) {
+            std::cerr << "Usage: kmeans_openmp DATA.csv [K=7] [MAX_ITER=100] [SEED=42]"
+                         " [--fixed-iterations] [--centroids FILE]\n";
             return 2;
         }
         const int k = argc > 2 ? std::stoi(argv[2]) : 7;
         const int max_iter = argc > 3 ? std::stoi(argv[3]) : 100;
         const uint64_t seed = argc > 4 ? std::stoull(argv[4]) : 42;
+        bool fixed_iterations = false;
+        std::string centroid_path;
+        for (int i = 5; i < argc; ++i) {
+            const std::string option = argv[i];
+            if (option == "--fixed-iterations") {
+                fixed_iterations = true;
+            } else if (option == "--centroids" && i + 1 < argc) {
+                centroid_path = argv[++i];
+            } else {
+                throw std::runtime_error("Unknown or incomplete option: " + option);
+            }
+        }
         if (k < 1 || max_iter < 1) throw std::runtime_error("K and MAX_ITER must be positive");
         auto t0 = Clock::now();
         std::vector<double> x = read_data(argv[1]);
@@ -181,11 +205,15 @@ int main(int argc, char** argv) {
                     for (int j = 0; j < D; ++j)
                         c[size_t(cluster) * D + j] = sums[size_t(cluster) * D + j] / double(counts[cluster]);
             iterations = iter + 1;
-            if (changed == 0) { converged = true; break; }
+            if (changed == 0) {
+                converged = true;
+                if (!fixed_iterations) break;
+            }
         }
         auto t4 = Clock::now();
         const double inertia = final_inertia(x, c, k);
         auto t5 = Clock::now();
+        if (!centroid_path.empty()) write_centroids(centroid_path, c, k);
         std::cout << std::fixed << std::setprecision(6)
                   << "rows=" << n << " features=" << D << " k=" << k
                   << " max_iter=" << max_iter << " seed=" << seed << '\n'
@@ -195,6 +223,7 @@ int main(int argc, char** argv) {
                   << " validation_s=" << seconds(t4, t5)
                   << " total_s=" << seconds(t0, t5) << '\n';
         std::cout << "implementation=openmp threads=" << threads
+                  << " stopping_mode=" << (fixed_iterations ? "fixed_iterations" : "convergence")
                   << " converged=" << (converged ? "true" : "false") << '\n';
         std::cout << "cluster_sizes=";
         for (int cluster = 0; cluster < k; ++cluster)
