@@ -151,6 +151,17 @@ scripts/analyze.py writes figures/*.png and results/SUMMARY.md. An experiment
 with no measured data produces a figure that says **PENDING**; no value is ever
 invented or interpolated.
 
+Atlas runs are analysed the same way, from the local machine:
+
+    python3 scripts/analyze.py --results results/atlas --figures figures/atlas \
+        --experiments e1,e2,e3,e4,e5
+
+The Atlas login node ships no pandas or matplotlib (system python3 is 3.6.8 and
+the python3.7 module has no site-packages for them), so plotting stays where
+the libraries exist. The Python tools are 3.6 compatible and print that
+instruction instead of failing with an import or syntax error; the C++ programs
+and the PBS job scripts are unaffected.
+
 ## Tests
 
     make test

@@ -1,34 +1,27 @@
 #!/usr/bin/env bash
-#PBS -N kmeans-weak
+#PBS -N km-e3-weak
+#PBS -q parallel
 #PBS -j oe
 #PBS -l walltime=01:30:00
-#PBS -l select=1:ncpus=8:mpiprocs=8:ompthreads=1
+#PBS -l select=1:ncpus=96:mpiprocs=96:mem=200gb
 #
-# E3 weak scaling with deterministic local generation. Each rank builds its own
-# 50000-observation block in memory from the preprocessed Covertype source.
-# The source is cached once as a binary so 256 ranks read the shared file
-# instead of receiving a 250 MB broadcast; drop SOURCE_BIN to measure the
-# broadcast variant at small rank counts.
+# E3 MPI weak scaling: 50000 deterministically generated observations per rank,
+# K=7, 30 fixed iterations, 3 repetitions. 96 ranks x 50000 = 4.8 M logical
+# observations. Every rank needs its own copy of the 252 MB preprocessed source
+# matrix (96 x 252 MB = 24 GB), hence the 200 GB memory request.
+# The source is cached once as a binary so rank startup reads a file instead of
+# exchanging a 252 MB broadcast.
 cd "$PBS_O_WORKDIR" || exit 1
 . jobs/common.sh
 preflight
-load_modules
-build_if_needed
+build_cpu
 
-export OMP_NUM_THREADS=1
-export MPI_LAUNCHER="$MPI_LAUNCHER"
-export MPI_FLAGS=$(mpi_flags)
-
-RANKS=$(printenv RANKS || echo "1,4,16,32,64,128,256")
-REPS=$(printenv REPS || echo "$REPETITIONS")
-PER_RANK=$(printenv PER_RANK || echo 50000)
-SOURCE_BIN=$(printenv SOURCE_BIN || echo "$WORKDIR/cache/covtype_source.bin")
-OUT="$RESULTS_DIR/e3_weak_$PBS_JOBID.csv"
-
-mkdir -p "$(dirname "$SOURCE_BIN")"
-echo "ranks=$RANKS per_rank=$PER_RANK source_bin=$SOURCE_BIN out=$OUT"
-python3 scripts/run_mpi.py --experiment weak --ranks "$RANKS" --repetitions "$REPS" \
-  --per-rank "$PER_RANK" --max-iter 30 --k 7 --source-bin "$SOURCE_BIN" --results "$OUT"
+OUT=$(job_results_path e3_weak)
+SOURCE_BIN="$WORKDIR/cache/covtype_source.bin"
+echo "results=$OUT source_bin=$SOURCE_BIN"
+python3 scripts/run_mpi.py --experiment weak --ranks "${RANKS:-1,2,4,8,16,32,64,96}" \
+  --per-rank "${PER_RANK:-50000}" --source-bin "$SOURCE_BIN" \
+  --repetitions "${REPS:-3}" --k 7 --max-iter 30 --nodes 1 --binding core --results "$OUT"
 status=$?
-echo "runner exit=$status"
+if [ -f "$OUT" ]; then echo "runner_exit=$status rows=$(($(wc -l < "$OUT") - 1))"; else echo "runner_exit=$status rows=NO_CSV"; fi
 exit $status

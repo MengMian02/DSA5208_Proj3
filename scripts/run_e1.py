@@ -11,7 +11,6 @@ k-means++ initialization and the final inertia validation are recorded in their
 own columns and never folded into fit_s.
 """
 
-from __future__ import annotations
 
 import argparse
 import datetime as dt

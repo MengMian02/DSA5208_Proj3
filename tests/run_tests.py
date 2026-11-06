@@ -75,7 +75,7 @@ def run_impl(name, data_path, k, max_iter, seed, fixed, centroid_path,
         command,
         cwd=ROOT,
         env=env,
-        text=True,
+        universal_newlines=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         timeout=timeout,
@@ -249,11 +249,11 @@ def run_empty_cluster_test():
     process = subprocess.run(
         [compiler, "-O2", "-std=c++17", str(ROOT / "tests/empty_cluster_test.cpp"),
          "-o", str(binary)],
-        cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        cwd=ROOT, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
     )
     require(process.returncode == 0, f"empty-cluster test compile failed:\n{process.stderr}")
     process = subprocess.run(
-        [str(binary)], cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        [str(binary)], cwd=ROOT, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
     )
     require(process.returncode == 0, f"empty-cluster test failed:\n{process.stderr}")
     print(process.stdout.strip())

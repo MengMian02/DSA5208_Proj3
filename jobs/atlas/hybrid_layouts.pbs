@@ -1,31 +1,25 @@
 #!/usr/bin/env bash
-#PBS -N kmeans-hybrid
+#PBS -N km-e4-hybrid
+#PBS -q parallel
 #PBS -j oe
 #PBS -l walltime=01:00:00
-#PBS -l select=1:ncpus=8:mpiprocs=8:ompthreads=8
+#PBS -l select=1:ncpus=96:mpiprocs=96:ompthreads=96:mem=64gb
 #
-# E4 hybrid MPI+OpenMP at an equal core budget. The allocation must equal the
-# core budget of every layout: with -l select=1:ncpus=72 (or 2:ncpus=36) the
-# layouts 72x1, 36x2, 18x4, 9x8, 4x18 and 1x72 all use 72 cores.
-# LAYOUTS is passed by jobs/atlas/submit.sh.
+# E4 hybrid MPI+OpenMP at a fixed 96-core budget on one node. Every layout uses
+# ranks x threads = 96, so the only variable is how the cores are split.
+# Binding uses ppr:<ranks>:node:pe=<threads>, which reserves a block of
+# <threads> cores per rank: a plain --bind-to core would pin an entire OpenMP
+# team to one core.
 cd "$PBS_O_WORKDIR" || exit 1
 . jobs/common.sh
 preflight
-load_modules
-build_if_needed
+build_cpu
 
-export OMP_PROC_BIND=close
-export OMP_PLACES=cores
-export MPI_LAUNCHER="$MPI_LAUNCHER"
-export MPI_FLAGS=$(mpi_flags)
-
-LAYOUTS=$(printenv LAYOUTS || echo "4x1,2x2,1x4")
-REPS=$(printenv REPS || echo "$REPETITIONS")
-OUT="$RESULTS_DIR/e4_hybrid_$PBS_JOBID.csv"
-
-echo "layouts=$LAYOUTS reps=$REPS out=$OUT"
-python3 scripts/run_mpi.py --experiment hybrid --layouts "$LAYOUTS" --repetitions "$REPS" \
-  --max-iter 30 --k 7 --results "$OUT"
+OUT=$(job_results_path e4_hybrid)
+LAYOUTS="96x1,48x2,32x3,24x4,16x6,12x8,8x12,6x16,4x24,3x32,2x48,1x96"
+echo "results=$OUT layouts=${LAYOUTS:-$LAYOUTS}"
+python3 scripts/run_mpi.py --experiment hybrid --layouts "${LAYOUTS:-$LAYOUTS}" \
+  --repetitions "${REPS:-3}" --k 7 --max-iter 30 --nodes 1 --binding ppr --results "$OUT"
 status=$?
-echo "runner exit=$status"
+if [ -f "$OUT" ]; then echo "runner_exit=$status rows=$(($(wc -l < "$OUT") - 1))"; else echo "runner_exit=$status rows=NO_CSV"; fi
 exit $status

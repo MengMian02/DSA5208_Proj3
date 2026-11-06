@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+#PBS -N km-smoke
+#PBS -q parallel
+#PBS -j oe
+#PBS -l walltime=00:40:00
+# The parallel queue enforces resources_min.ncpus=12 (observed via
+# "qstat -Qf parallel"), so the smoke test asks for 12 cores even though it
+# only needs a handful.
+#PBS -l select=1:ncpus=12:mpiprocs=12:mem=16gb
+#
+# Short correctness gate. Everything runs on a compute node, never a login
+# node. It prints the node's real CPU topology (SMT, cores, NUMA), rebuilds the
+# CPU programs, and checks that serial, OpenMP, MPI (2 and 8 ranks), hybrid and
+# weak-scaling runs agree on the same 20000-observation subset.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/common.sh
+preflight
+build_cpu
+
+echo "== node topology =="
+hostname
+lscpu | egrep "Model name|Socket|Core\(s\) per socket|Thread\(s\) per core|CPU\(s\)|NUMA node"
+free -g | head -2
+echo "== allocation =="
+cat "$PBS_NODEFILE" | sort | uniq -c
+
+OUT=$(job_results_path smoke)
+echo "== scripts/smoke_test.py =="
+python3 scripts/smoke_test.py 2>&1 | tee "$LOGS_DIR/smoke_test_${PBS_JOBID}.log"
+smoke_rc=$?
+
+echo "== extra: 8-rank strong and 4x2 hybrid hash check =="
+SERIAL_HASH=$(./kmeans_serial data/covtype.data 7 10 42 --fixed-iterations --rows 20000 \
+              | sed -n 's/^label_hash=//p')
+echo "serial_hash=$SERIAL_HASH"
+for cfg in "8 1" "4 2" "2 4"; do
+  set -- $cfg
+  H=$(OMP_NUM_THREADS=$2 mpirun -np $1 $MPI_FLAGS ./kmeans_hybrid data/covtype.data 7 10 42 \
+      --fixed-iterations --rows 20000 | sed -n 's/^label_hash=//p')
+  echo "hybrid x hash=$H"
+  if [ "$H" != "$SERIAL_HASH" ]; then
+    echo "MISMATCH for x" >&2
+    smoke_rc=1
+  fi
+done
+
+echo "== weak-scaling determinism (total 20000, two rank counts) =="
+W1=$(mpirun -np 1 $MPI_FLAGS ./kmeans_mpi data/covtype.data 7 5 42 --fixed-iterations \
+     --weak-per-rank 20000 | sed -n 's/^label_hash=//p')
+W2=$(mpirun -np 4 $MPI_FLAGS ./kmeans_mpi data/covtype.data 7 5 42 --fixed-iterations \
+     --weak-per-rank 5000 | sed -n 's/^label_hash=//p')
+echo "weak 1x20000=$W1 4x5000=$W2"
+if [ "$W1" != "$W2" ]; then
+  echo "WEAK-SCALING MISMATCH" >&2
+  smoke_rc=1
+fi
+
+echo "smoke_rc=$smoke_rc"
+if [ "$smoke_rc" -eq 0 ]; then echo "SMOKE TEST PASSED"; else echo "SMOKE TEST FAILED"; fi
+exit "$smoke_rc"

@@ -11,7 +11,6 @@ reproducibility metadata and appends rather than overwrites results:
 * refusing to record a run that failed or produced incomplete metrics
 """
 
-from __future__ import annotations
 
 import csv
 import datetime as _dt
@@ -58,9 +57,18 @@ class BenchmarkError(RuntimeError):
     pass
 
 
+def shell_command(command):
+    """Render a command line for logs without shlex.join (Python 3.8+ only).
+
+    Atlas runs Python 3.7.0, where shlex.join does not exist; using it inside
+    the failure path turned a single failed run into an aborted sweep.
+    """
+    return " ".join(shlex.quote(str(part)) for part in command)
+
+
 def _cmd(args, timeout=20):
     try:
-        out = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+        out = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=timeout)
     except (OSError, subprocess.SubprocessError):
         return ""
     return (out.stdout or out.stderr).strip()
@@ -127,20 +135,21 @@ def execute(command, env=None, timeout=3600, cwd=None):
     if env:
         full_env.update(env)
     started = _dt.datetime.now()
-    process = subprocess.run(command, cwd=str(cwd or ROOT), env=full_env, text=True,
-                             capture_output=True, timeout=timeout)
+    process = subprocess.run(command, cwd=str(cwd or ROOT), env=full_env, universal_newlines=True,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
     wall = (_dt.datetime.now() - started).total_seconds()
     if process.returncode != 0:
         raise BenchmarkError(
-            "command failed (%d): %s\nstderr tail:\n%s"
-            % (process.returncode, shlex.join(command), process.stderr[-1500:])
+            "command failed (%d): %s\nstdout tail:\n%s\nstderr tail:\n%s"
+            % (process.returncode, shell_command(command),
+               process.stdout[-800:], process.stderr[-1500:])
         )
     metrics = parse_metrics(process.stdout)
     missing = [key for key in REQUIRED_KEYS if key not in metrics]
     if missing:
         raise BenchmarkError(
             "output of %s is missing %s; truncated stdout:\n%s"
-            % (shlex.join(command), missing, process.stdout[-1200:])
+            % (shell_command(command), missing, process.stdout[-1200:])
         )
     metrics["_wall_s"] = wall
     metrics["_stdout"] = process.stdout
@@ -166,10 +175,15 @@ def append_row(path, schema, row):
 
 
 def record_failure(experiment, command, error):
-    RESULTS.mkdir(parents=True, exist_ok=True)
-    stamp = _dt.datetime.now().isoformat(timespec="seconds")
-    with FAILURES.open("a") as handle:
-        handle.write("[%s] %s %s\n  %s\n" % (stamp, experiment, shlex.join(command), error))
+    """Append a failure record. Never raises: reporting must not abort a sweep."""
+    try:
+        RESULTS.mkdir(parents=True, exist_ok=True)
+        stamp = _dt.datetime.now().isoformat(timespec="seconds")
+        with FAILURES.open("a") as handle:
+            handle.write("[%s] %s %s\n  %s\n"
+                         % (stamp, experiment, shell_command(command), error))
+    except Exception:  # noqa: BLE001 - best effort only
+        print("WARNING: could not write failure record for %s" % experiment, file=sys.stderr)
 
 
 def make_run_id(experiment, suffix=""):

@@ -1,0 +1,63 @@
+job=1034398.venus01 host=cnode-33-43-25
+workdir=/home/svu/e0550588/dsa5208 results=/home/svu/e0550588/dsa5208/results logs=/home/svu/e0550588/dsa5208/logs
+nodes=1 ncpus_requested=unset
+mpicxx=/app1/centos7/gnu/openmpi-4.1.1/bin/mpicxx g++ (GCC) 7.3.0
+python3=/app1/centos6.3/gnu/python3/3.7.0/bin/python3 Python 3.7.0
+== build on cnode-33-43-25 ==
+g++ -O3 -std=c++17 -DNDEBUG -Wall -Wextra -Wpedantic kmeans_serial.cpp -o kmeans_serial
+g++ -O3 -std=c++17 -DNDEBUG -Wall -Wextra -Wpedantic -fopenmp kmeans_openmp.cpp  -o kmeans_openmp
+mpicxx -O3 -std=c++17 -DNDEBUG -Wall -Wextra -Wpedantic kmeans_mpi.cpp -o kmeans_mpi
+mpicxx -O3 -std=c++17 -DNDEBUG -Wall -Wextra -Wpedantic -fopenmp kmeans_hybrid.cpp  -o kmeans_hybrid
+-rwxr-xr-x 1 e0550588 svuusers 70752 Nov  6 00:00 /home/svu/e0550588/dsa5208/kmeans_hybrid
+-rwxr-xr-x 1 e0550588 svuusers 66176 Nov  6 00:00 /home/svu/e0550588/dsa5208/kmeans_mpi
+-rwxr-xr-x 1 e0550588 svuusers 48296 Nov  6 00:00 /home/svu/e0550588/dsa5208/kmeans_openmp
+-rwxr-xr-x 1 e0550588 svuusers 47768 Nov  6 00:00 /home/svu/e0550588/dsa5208/kmeans_serial
+== node topology ==
+cnode-33-43-25
+CPU(s):                96
+On-line CPU(s) list:   0-95
+Thread(s) per core:    1
+Core(s) per socket:    48
+Socket(s):             2
+NUMA node(s):          4
+Model name:            AMD EPYC 7R13 Processor
+NUMA node0 CPU(s):     0-23
+NUMA node1 CPU(s):     24-47
+NUMA node2 CPU(s):     48-71
+NUMA node3 CPU(s):     72-95
+              total        used        free      shared  buff/cache   available
+Mem:            369          57         153           0         158         311
+== allocation ==
+     12 cnode-33-43-25
+== scripts/smoke_test.py ==
+serial reference ...
+  rows=20000 iterations=10 inertia=127674.143194 hash=13331398156540273710
+  openmp 1x2     hash=13331398156540273710 OK
+  mpi 2x1        hash=13331398156540273710 OK
+  hybrid 2x2     hash=13331398156540273710 OK
+  weak 2 ranks   rows=10000 weak=1 obs/rank=5000
+  (kmeans_metal not built or not macOS: GPU check skipped)
+PASS: smoke test
+== extra: 8-rank strong and 4x2 hybrid hash check ==
+serial_hash=13331398156540273710
+hybrid x hash=13331398156540273710
+hybrid x hash=13331398156540273710
+hybrid x hash=13331398156540273710
+== weak-scaling determinism (total 20000, two rank counts) ==
+weak 1x20000=4563062909436114682 4x5000=4563062909436114682
+smoke_rc=0
+SMOKE TEST PASSED
+      ======================================================================================
+     Resource Usage on 2026-11-06 00:00:22.155311:
+     JobId: 1034398.venus01  				 Project: _pbs_project_default 
+     Submission Host: atlas8-c01 
+     Exit Status: 0
+     NCPUs Requested: 12 				 NCPUs Used: 12
+     Memory Requested: 16gb 				 Memory Used: 643460kb 
+     Vmem Used: 2480064kb
+     CPU Time Used: 00:00:23 
+     Walltime requested: 00:40:00 			 Walltime Used: 00:00:28
+     Submit Time:  Thu Nov  5 23:59:51 2026 		 Start Time: Thu Nov  5 23:59:53 2026 
+     End Time: Fri Nov  6 00:00:22 2026 
+     Execution Nodes Used: (cnode-33-43-25:ncpus=12:mem=16777216kb)
+     ======================================================================================

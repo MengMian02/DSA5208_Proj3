@@ -11,7 +11,6 @@ the same initialization and iteration count; the CPU/GPU comparison is
 tolerance based because Metal has no IEEE double.
 """
 
-from __future__ import annotations
 
 import argparse
 import datetime as dt

@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+#PBS -N km-e4-multinode
+#PBS -q parallel
+#PBS -j oe
+#PBS -l walltime=02:00:00
+#PBS -l select=2:ncpus=48:mpiprocs=24:ompthreads=2:mem=100gb
+#
+# E4 multi-node hybrid: 2 nodes x 48 cores = 96 cores, 48 ranks x 2 threads.
+# The question is whether spreading ranks over two nodes costs more in MPI
+# collectives than a single-node layout at the same core count.
+# pipefail: without it the "| tee" below would mask the runner's exit status
+# (job 1034410 reported exit 0 while all three repetitions had failed).
+set -o pipefail
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/common.sh
+preflight
+build_cpu
+
+OUT=$(job_results_path e4_multinode)
+echo "results=$OUT nodelist=$PBS_NODEFILE"
+# The 2-node launcher stderr is captured here: the previous attempt failed
+# inside the launcher and the traceback hid the message.
+python3 scripts/run_mpi.py --experiment hybrid --layouts "${LAYOUTS:-48x2}" \
+  --repetitions "${REPS:-3}" --k 7 --max-iter 30 --nodes 2 --binding ppr \
+  --hostfile "$PBS_NODEFILE" --results "$OUT" \
+  2>&1 | tee "$LOGS_DIR/e4_multinode_launcher.log"
+status=$?
+if [ -f "$OUT" ]; then echo "runner_exit=$status rows=$(($(wc -l < "$OUT") - 1))"; else echo "runner_exit=$status rows=NO_CSV"; fi
+exit $status

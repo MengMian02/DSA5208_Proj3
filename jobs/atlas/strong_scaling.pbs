@@ -1,33 +1,24 @@
 #!/usr/bin/env bash
-#PBS -N kmeans-strong
+#PBS -N km-e2-strong
+#PBS -q parallel
 #PBS -j oe
 #PBS -l walltime=01:00:00
-#PBS -l select=1:ncpus=8:mpiprocs=8:ompthreads=1
+#PBS -l select=1:ncpus=96:mpiprocs=96:mem=64gb
 #
-# E2 strong scaling. The select line above is a floor for a smoke run; the real
-# allocation is passed by jobs/atlas/submit.sh, for example
-#   -l select=4:ncpus=64:mpiprocs=64:ompthreads=1     (256 cores)
-#
-# One job runs the whole rank sweep so that every configuration sees the same
-# node set, interconnect and filesystem cache state.
+# E2 MPI strong scaling, full Covertype, K=7, 30 fixed iterations, 3 repetitions.
+# The parallel queue caps a job at 96 CPUs (resources_max.ncpus=96), so the
+# sweep stops at 96 ranks instead of the 256 discussed for a multi-node run.
+# One job runs the whole sweep so every point sees the same node and the same
+# filesystem cache state.
 cd "$PBS_O_WORKDIR" || exit 1
 . jobs/common.sh
 preflight
-load_modules
-build_if_needed
+build_cpu
 
-export OMP_NUM_THREADS=1
-export MPI_LAUNCHER="$MPI_LAUNCHER"
-export MPI_FLAGS=$(mpi_flags)
-
-RANKS=$(printenv RANKS || echo "1,4,16,32,64,128,256")
-REPS=$(printenv REPS || echo "$REPETITIONS")
-OUT="$RESULTS_DIR/e2_strong_$PBS_JOBID.csv"
-
-echo "ranks=$RANKS reps=$REPS out=$OUT"
-python3 scripts/run_mpi.py --experiment strong --ranks "$RANKS" --repetitions "$REPS" \
-  --max-iter 30 --k 7 --results "$OUT"
+OUT=$(job_results_path e2_strong)
+echo "results=$OUT"
+python3 scripts/run_mpi.py --experiment strong --ranks "${RANKS:-1,2,4,8,16,32,64,96}" \
+  --repetitions "${REPS:-3}" --k 7 --max-iter 30 --nodes 1 --binding core --results "$OUT"
 status=$?
-echo "runner exit=$status"
-grep -c '^csv=' "$OUT" 2>/dev/null || true
+if [ -f "$OUT" ]; then echo "runner_exit=$status rows=$(($(wc -l < "$OUT") - 1))"; else echo "runner_exit=$status rows=NO_CSV"; fi
 exit $status

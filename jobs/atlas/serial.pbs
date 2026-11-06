@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
-#PBS -N kmeans-serial
+#PBS -N km-e1-serial
+#PBS -q serial
 #PBS -j oe
-#PBS -l walltime=01:00:00
-#PBS -l select=1:ncpus=1:mpiprocs=1:ompthreads=1
+#PBS -l walltime=01:30:00
+#PBS -l select=1:ncpus=1:mem=8gb
 #
-# E1 serial scaling, executed on the cluster so that the report can quote
-# Atlas/Vanda runtimes for the serial baseline too.
+# E1 serial scaling on a compute node (never the login node). One core, so it
+# goes to the serial queue, which is limited to ncpus=1 and mem<=15gb.
+# Two grids at K=7/N=581012 and N/K sweeps, 30 fixed iterations, 3 repetitions.
 cd "$PBS_O_WORKDIR" || exit 1
 . jobs/common.sh
 preflight
-load_modules
-build_if_needed
+build_cpu
 
-OUT="$RESULTS_DIR/e1_serial_$PBS_JOBID.csv"
-REPS=$(printenv REPS || echo "$REPETITIONS")
-python3 scripts/run_e1.py --implementation serial --grid both --repetitions "$REPS" \
-  --max-iter 30 --results "$OUT"
+OUT=$(job_results_path e1_serial)
+echo "results=$OUT"
+python3 scripts/run_e1.py --implementation serial --grid both \
+  --repetitions "${REPS:-3}" --max-iter 30 --results "$OUT"
 status=$?
-echo "runner exit=$status"
+if [ -f "$OUT" ]; then echo "runner_exit=$status rows=$(($(wc -l < "$OUT") - 1))"; else echo "runner_exit=$status rows=NO_CSV"; fi
 exit $status

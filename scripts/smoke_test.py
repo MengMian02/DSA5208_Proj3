@@ -7,7 +7,6 @@ after a checkout or a rebuild:
     make && python3 scripts/smoke_test.py
 """
 
-from __future__ import annotations
 
 import os
 import shutil
@@ -38,7 +37,7 @@ def run(command, env=None, expect="label_hash"):
     if env:
         full_env.update(env)
     process = subprocess.run([str(part) for part in command], cwd=str(ROOT), env=full_env,
-                             text=True, capture_output=True, timeout=900)
+                             universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=900)
     if process.returncode != 0:
         raise SystemExit("FAILED: %s\n%s" % (" ".join(map(str, command)), process.stderr[-1500:]))
     metrics = parse(process.stdout)

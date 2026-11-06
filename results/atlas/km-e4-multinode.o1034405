@@ -1,0 +1,48 @@
+job=1034405.venus01 host=cnode-33-43-44
+workdir=/home/svu/e0550588/dsa5208 results=/home/svu/e0550588/dsa5208/results logs=/home/svu/e0550588/dsa5208/logs
+nodes=2 ncpus_requested=unset
+mpicxx=/app1/centos7/gnu/openmpi-4.1.1/bin/mpicxx g++ (GCC) 7.3.0
+python3=/app1/centos6.3/gnu/python3/3.7.0/bin/python3 Python 3.7.0
+== build on cnode-33-43-44 ==
+g++ -O3 -std=c++17 -DNDEBUG -Wall -Wextra -Wpedantic kmeans_serial.cpp -o kmeans_serial
+g++ -O3 -std=c++17 -DNDEBUG -Wall -Wextra -Wpedantic -fopenmp kmeans_openmp.cpp  -o kmeans_openmp
+mpicxx -O3 -std=c++17 -DNDEBUG -Wall -Wextra -Wpedantic kmeans_mpi.cpp -o kmeans_mpi
+mpicxx -O3 -std=c++17 -DNDEBUG -Wall -Wextra -Wpedantic -fopenmp kmeans_hybrid.cpp  -o kmeans_hybrid
+-rwxr-xr-x 1 e0550588 svuusers 70752 Nov  6 00:03 /home/svu/e0550588/dsa5208/kmeans_hybrid
+-rwxr-xr-x 1 e0550588 svuusers 66176 Nov  6 00:03 /home/svu/e0550588/dsa5208/kmeans_mpi
+-rwxr-xr-x 1 e0550588 svuusers 48296 Nov  6 00:03 /home/svu/e0550588/dsa5208/kmeans_openmp
+-rwxr-xr-x 1 e0550588 svuusers 47768 Nov  6 00:03 /home/svu/e0550588/dsa5208/kmeans_serial
+results=/home/svu/e0550588/dsa5208/results/atlas_e4_multinode_1034405.venus01.csv nodelist=/var/spool/pbs/aux/1034405.venus01
+Traceback (most recent call last):
+  File "scripts/run_mpi.py", line 173, in main
+    metrics, _ = bencher.execute(command, env=env)
+  File "/home/svu/e0550588/dsa5208/scripts/bencher.py", line 136, in execute
+    % (process.returncode, shlex.join(command), process.stderr[-1500:])
+AttributeError: module 'shlex' has no attribute 'join'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "scripts/run_mpi.py", line 226, in <module>
+    raise SystemExit(main())
+  File "scripts/run_mpi.py", line 176, in main
+    bencher.record_failure("e" + experiment[-1], command, error)
+  File "/home/svu/e0550588/dsa5208/scripts/bencher.py", line 172, in record_failure
+    handle.write("[%s] %s %s\n  %s\n" % (stamp, experiment, shlex.join(command), error))
+AttributeError: module 'shlex' has no attribute 'join'
+/var/spool/pbs/mom_priv/jobs/1034405.venus01.SC: line 21: /home/svu/e0550588/dsa5208/results/atlas_e4_multinode_1034405.venus01.csv: No such file or directory
+runner_exit=1 rows=-1
+      ======================================================================================
+     Resource Usage on 2026-11-06 00:03:49.190989:
+     JobId: 1034405.venus01  				 Project: _pbs_project_default 
+     Submission Host: atlas8-c01 
+     Exit Status: 1
+     NCPUs Requested: 96 				 NCPUs Used: 96
+     Memory Requested: 200gb 				 Memory Used: 151268kb 
+     Vmem Used: 830984kb
+     CPU Time Used: 00:00:01 
+     Walltime requested: 02:00:00 			 Walltime Used: 00:00:20
+     Submit Time:  Fri Nov  6 00:03:12 2026 		 Start Time: Fri Nov  6 00:03:16 2026 
+     End Time: Fri Nov  6 00:03:49 2026 
+     Execution Nodes Used: (cnode-33-43-44:ncpus=48:mem=104857600kb)+(cnode-33-43-45:ncpus=48:mem=104857600kb)
+     ======================================================================================

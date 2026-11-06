@@ -10,7 +10,6 @@
 One row per repetition is appended; medians across repetitions feed the plots.
 """
 
-from __future__ import annotations
 
 import argparse
 import datetime as dt
@@ -69,7 +68,14 @@ def build_cases(args):
         for ranks in args.ranks:
             cases.append({"implementation": "mpi", "ranks": ranks, "threads": 1,
                           "weak_per_rank": args.per_rank})
-    else:  # hybrid
+    elif args.layouts:  # explicit ranks x threads layouts
+        for layout in args.layouts:
+            ranks_text, _, threads_text = layout.lower().partition("x")
+            if not ranks_text or not threads_text:
+                raise bencher.BenchmarkError("bad layout %r, expected RANKSxTHREADS" % layout)
+            cases.append({"implementation": "hybrid", "ranks": int(ranks_text),
+                          "threads": int(threads_text)})
+    else:  # hybrid cross product
         for ranks in args.ranks:
             for threads in args.threads:
                 workers = ranks * threads
@@ -79,8 +85,28 @@ def build_cases(args):
     return cases
 
 
+def case_flags(args, case):
+    """Launcher binding flags for one case.
+
+    Hybrid layouts at an equal core budget need one rank block of T cores per
+    rank (ppr:...:pe=T), otherwise --bind-to core would pin a whole OpenMP team
+    onto a single core. Single-threaded sweeps keep one rank per core.
+    """
+    if args.binding == "none":
+        return ["--bind-to", "none"]
+    if args.experiment == "hybrid" and args.binding == "ppr":
+        nodes = max(1, args.nodes)
+        per_node = max(1, (case["ranks"] + nodes - 1) // nodes)
+        return ["--map-by", "ppr:%d:node:pe=%d" % (per_node, case["threads"]),
+                "--bind-to", "core"]
+    return mpi_flags()
+
+
 def build_command(args, case, binary):
-    command = [launcher()] + mpi_flags()
+    command = [launcher()]
+    if args.hostfile:
+        command += ["--hostfile", str(args.hostfile)]
+    command += case_flags(args, case)
     if args.oversubscribe:
         command.append("--oversubscribe")
     command += [rank_flag(), str(case["ranks"]), str(binary), str(args.data)]
@@ -107,10 +133,20 @@ def main():
     parser.add_argument("--per-rank", type=int, default=50_000,
                         help="E3: observations per rank")
     parser.add_argument("--repetitions", type=int, default=3)
+    parser.add_argument("--layouts", type=str, default="",
+                        help="explicit hybrid layouts such as 96x1,48x2,1x96")
     parser.add_argument("--max-workers", type=int, default=0,
                         help="skip layouts above this many MPI ranks x threads")
     parser.add_argument("--source-bin", type=Path, default=None,
                         help="E3: shared cached binary source instead of a broadcast")
+    parser.add_argument("--hostfile", type=str, default="",
+                        help="explicit launcher hostfile (e.g. the PBS nodefile for a "
+                             "multi-node job; Open MPI otherwise sees one node)")
+    parser.add_argument("--nodes", type=int, default=1,
+                        help="nodes the allocation spans (drives ppr binding)")
+    parser.add_argument("--binding", choices=["core", "ppr", "none"], default="core",
+                        help="core: env MPI_FLAGS; ppr: one rank block of T cores per "
+                             "layout; none: no binding (OpenMP spreads itself)")
     parser.add_argument("--oversubscribe", action="store_true")
     parser.add_argument("--results", type=Path, default=None)
     parser.add_argument("--dry-run", action="store_true")
@@ -118,6 +154,7 @@ def main():
 
     args.ranks = parse_rank_list(args.ranks)
     args.threads = parse_int_list(args.threads)
+    args.layouts = [value for value in args.layouts.split(",") if value.strip()]
     results = args.results or (bencher.RESULTS / DEFAULT_RESULTS[args.experiment])
     binary = bencher.require_binary(bencher.ROOT / "kmeans_mpi")
     if args.experiment == "hybrid":

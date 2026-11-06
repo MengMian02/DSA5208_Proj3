@@ -1,0 +1,50 @@
+job=1034401.venus01 host=cnode-33-43-53
+workdir=/home/svu/e0550588/dsa5208 results=/home/svu/e0550588/dsa5208/results logs=/home/svu/e0550588/dsa5208/logs
+nodes=1 ncpus_requested=unset
+mpicxx=/app1/centos7/gnu/openmpi-4.1.1/bin/mpicxx g++ (GCC) 7.3.0
+python3=/app1/centos6.3/gnu/python3/3.7.0/bin/python3 Python 3.7.0
+== binaries present, no build needed ==
+-rwxr-xr-x 1 e0550588 svuusers 70752 Nov  6 00:03 /home/svu/e0550588/dsa5208/kmeans_hybrid
+-rwxr-xr-x 1 e0550588 svuusers 66176 Nov  6 00:03 /home/svu/e0550588/dsa5208/kmeans_mpi
+-rwxr-xr-x 1 e0550588 svuusers 48296 Nov  6 00:03 /home/svu/e0550588/dsa5208/kmeans_openmp
+-rwxr-xr-x 1 e0550588 svuusers 47768 Nov  6 00:03 /home/svu/e0550588/dsa5208/kmeans_serial
+results=/home/svu/e0550588/dsa5208/results/atlas_e2_strong_1034401.venus01.csv
+E2 ranks=1 threads=1 rep=1/3: fit_s=4.4154 local=4.4153 coll=0.0001 obs/rank=581012
+E2 ranks=1 threads=1 rep=2/3: fit_s=4.4149 local=4.4148 coll=0.0001 obs/rank=581012
+E2 ranks=1 threads=1 rep=3/3: fit_s=4.4174 local=4.4173 coll=0.0001 obs/rank=581012
+E2 ranks=2 threads=1 rep=1/3: fit_s=2.2108 local=2.2101 coll=0.0132 obs/rank=290506
+E2 ranks=2 threads=1 rep=2/3: fit_s=2.2120 local=2.2112 coll=0.0150 obs/rank=290506
+E2 ranks=2 threads=1 rep=3/3: fit_s=2.2110 local=2.2103 coll=0.0134 obs/rank=290506
+E2 ranks=4 threads=1 rep=1/3: fit_s=1.1114 local=1.1104 coll=0.0106 obs/rank=145253
+E2 ranks=4 threads=1 rep=2/3: fit_s=1.1093 local=1.1084 coll=0.0085 obs/rank=145253
+E2 ranks=4 threads=1 rep=3/3: fit_s=1.1080 local=1.1073 coll=0.0084 obs/rank=145253
+E2 ranks=8 threads=1 rep=1/3: fit_s=0.5572 local=0.5561 coll=0.0069 obs/rank=72626
+E2 ranks=8 threads=1 rep=2/3: fit_s=0.5570 local=0.5559 coll=0.0057 obs/rank=72626
+E2 ranks=8 threads=1 rep=3/3: fit_s=0.5579 local=0.5562 coll=0.0062 obs/rank=72626
+E2 ranks=16 threads=1 rep=1/3: fit_s=0.2769 local=0.2744 coll=0.0049 obs/rank=36313
+E2 ranks=16 threads=1 rep=2/3: fit_s=0.2768 local=0.2750 coll=0.0047 obs/rank=36313
+E2 ranks=16 threads=1 rep=3/3: fit_s=0.2802 local=0.2751 coll=0.0081 obs/rank=36313
+E2 ranks=32 threads=1 rep=1/3: fit_s=0.1392 local=0.1374 coll=0.0031 obs/rank=18156
+E2 ranks=32 threads=1 rep=2/3: fit_s=0.1390 local=0.1373 coll=0.0029 obs/rank=18156
+E2 ranks=32 threads=1 rep=3/3: fit_s=0.1393 local=0.1377 coll=0.0032 obs/rank=18156
+E2 ranks=64 threads=1 rep=1/3: fit_s=0.0742 local=0.0721 coll=0.0060 obs/rank=9078
+E2 ranks=64 threads=1 rep=2/3: fit_s=0.0751 local=0.0721 coll=0.0069 obs/rank=9078
+E2 ranks=64 threads=1 rep=3/3: fit_s=0.0744 local=0.0721 coll=0.0062 obs/rank=9078
+E2 ranks=96 threads=1 rep=1/3: fit_s=0.0502 local=0.0479 coll=0.0036 obs/rank=6052
+E2 ranks=96 threads=1 rep=2/3: fit_s=0.0502 local=0.0480 coll=0.0034 obs/rank=6052
+E2 ranks=96 threads=1 rep=3/3: fit_s=0.0504 local=0.0480 coll=0.0038 obs/rank=6052
+runner_exit=0 rows=24
+      ======================================================================================
+     Resource Usage on 2026-11-06 03:50:07.186066:
+     JobId: 1034401.venus01  				 Project: _pbs_project_default 
+     Submission Host: atlas8-c01 
+     Exit Status: 0
+     NCPUs Requested: 96 				 NCPUs Used: 96
+     Memory Requested: 64gb 				 Memory Used: 0b 
+     Vmem Used: 30731404kb
+     CPU Time Used: 00:00:00 
+     Walltime requested: 01:00:00 			 Walltime Used: 00:01:30
+     Submit Time:  Fri Nov  6 00:01:14 2026 		 Start Time: Fri Nov  6 03:48:37 2026 
+     End Time: Fri Nov  6 03:50:07 2026 
+     Execution Nodes Used: (cnode-33-43-53:ncpus=96:mem=67108864kb)
+     ======================================================================================

@@ -5,7 +5,6 @@ Skipping is explicit: on a machine without Metal the suite reports SKIP and
 exits 0, so the CPU test suites stay usable on a Linux cluster.
 """
 
-from __future__ import annotations
 
 import os
 import subprocess
@@ -39,7 +38,7 @@ def parse_metrics(stdout):
 
 
 def run(command, timeout=900):
-    process = subprocess.run(command, cwd=str(ROOT), text=True, capture_output=True,
+    process = subprocess.run(command, cwd=str(ROOT), universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              timeout=timeout, env=dict(os.environ))
     return process
 

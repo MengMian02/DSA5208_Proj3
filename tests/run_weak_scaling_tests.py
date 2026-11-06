@@ -13,7 +13,6 @@ What is verified:
 5. Reported metadata (rows, obs_per_rank, weak flag) is correct.
 """
 
-from __future__ import annotations
 
 import os
 import shutil
@@ -65,8 +64,8 @@ def run(command, env=None, timeout=600):
     full_env = dict(os.environ)
     if env:
         full_env.update(env)
-    process = subprocess.run(command, cwd=str(ROOT), env=full_env, text=True,
-                             capture_output=True, timeout=timeout)
+    process = subprocess.run(command, cwd=str(ROOT), env=full_env, universal_newlines=True,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
     require(process.returncode == 0,
             "command failed: %s\n%s" % (" ".join(map(str, command)), process.stderr[-1200:]))
     return parse_metrics(process.stdout)

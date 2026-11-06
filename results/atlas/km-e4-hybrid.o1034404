@@ -1,0 +1,62 @@
+job=1034404.venus01 host=cnode-33-43-53
+workdir=/home/svu/e0550588/dsa5208 results=/home/svu/e0550588/dsa5208/results logs=/home/svu/e0550588/dsa5208/logs
+nodes=1 ncpus_requested=unset
+mpicxx=/app1/centos7/gnu/openmpi-4.1.1/bin/mpicxx g++ (GCC) 7.3.0
+python3=/app1/centos6.3/gnu/python3/3.7.0/bin/python3 Python 3.7.0
+== binaries present, no build needed ==
+-rwxr-xr-x 1 e0550588 svuusers 70752 Nov  6 00:03 /home/svu/e0550588/dsa5208/kmeans_hybrid
+-rwxr-xr-x 1 e0550588 svuusers 66176 Nov  6 00:03 /home/svu/e0550588/dsa5208/kmeans_mpi
+-rwxr-xr-x 1 e0550588 svuusers 48296 Nov  6 00:03 /home/svu/e0550588/dsa5208/kmeans_openmp
+-rwxr-xr-x 1 e0550588 svuusers 47768 Nov  6 00:03 /home/svu/e0550588/dsa5208/kmeans_serial
+results=/home/svu/e0550588/dsa5208/results/atlas_e4_hybrid_1034404.venus01.csv layouts=96x1,48x2,32x3,24x4,16x6,12x8,8x12,6x16,4x24,3x32,2x48,1x96
+E4 ranks=96 threads=1 rep=1/3: fit_s=0.0524 local=0.0503 coll=0.0054 obs/rank=6052
+E4 ranks=96 threads=1 rep=2/3: fit_s=0.0525 local=0.0507 coll=0.0055 obs/rank=6052
+E4 ranks=96 threads=1 rep=3/3: fit_s=0.0515 local=0.0488 coll=0.0043 obs/rank=6052
+E4 ranks=48 threads=2 rep=1/3: fit_s=0.0523 local=0.0505 coll=0.0055 obs/rank=12104
+E4 ranks=48 threads=2 rep=2/3: fit_s=0.0525 local=0.0508 coll=0.0056 obs/rank=12104
+E4 ranks=48 threads=2 rep=3/3: fit_s=0.0527 local=0.0512 coll=0.0057 obs/rank=12104
+E4 ranks=32 threads=3 rep=1/3: fit_s=0.0574 local=0.0561 coll=0.0107 obs/rank=18156
+E4 ranks=32 threads=3 rep=2/3: fit_s=0.0585 local=0.0573 coll=0.0123 obs/rank=18156
+E4 ranks=32 threads=3 rep=3/3: fit_s=0.0585 local=0.0574 coll=0.0120 obs/rank=18156
+E4 ranks=24 threads=4 rep=1/3: fit_s=0.0526 local=0.0510 coll=0.0053 obs/rank=24208
+E4 ranks=24 threads=4 rep=2/3: fit_s=0.0543 local=0.0505 coll=0.0069 obs/rank=24208
+E4 ranks=24 threads=4 rep=3/3: fit_s=0.0525 local=0.0516 coll=0.0054 obs/rank=24208
+E4 ranks=16 threads=6 rep=1/3: fit_s=0.0560 local=0.0545 coll=0.0081 obs/rank=36313
+E4 ranks=16 threads=6 rep=2/3: fit_s=0.0562 local=0.0547 coll=0.0086 obs/rank=36313
+E4 ranks=16 threads=6 rep=3/3: fit_s=0.0581 local=0.0555 coll=0.0104 obs/rank=36313
+E4 ranks=12 threads=8 rep=1/3: fit_s=0.0520 local=0.0509 coll=0.0034 obs/rank=48417
+E4 ranks=12 threads=8 rep=2/3: fit_s=0.0531 local=0.0522 coll=0.0050 obs/rank=48417
+E4 ranks=12 threads=8 rep=3/3: fit_s=0.0522 local=0.0512 coll=0.0037 obs/rank=48417
+E4 ranks=8 threads=12 rep=1/3: fit_s=0.0592 local=0.0580 coll=0.0102 obs/rank=72626
+E4 ranks=8 threads=12 rep=2/3: fit_s=0.0588 local=0.0552 coll=0.0085 obs/rank=72626
+E4 ranks=8 threads=12 rep=3/3: fit_s=0.0644 local=0.0581 coll=0.0136 obs/rank=72626
+E4 ranks=6 threads=16 rep=1/3: fit_s=0.0551 local=0.0533 coll=0.0045 obs/rank=96835
+E4 ranks=6 threads=16 rep=2/3: fit_s=0.0701 local=0.0624 coll=0.0177 obs/rank=96835
+E4 ranks=6 threads=16 rep=3/3: fit_s=0.0831 local=0.0616 coll=0.0324 obs/rank=96835
+E4 ranks=4 threads=24 rep=1/3: fit_s=0.0697 local=0.0627 coll=0.0120 obs/rank=145253
+E4 ranks=4 threads=24 rep=2/3: fit_s=0.0583 local=0.0576 coll=0.0063 obs/rank=145253
+E4 ranks=4 threads=24 rep=3/3: fit_s=0.0571 local=0.0563 coll=0.0055 obs/rank=145253
+E4 ranks=3 threads=32 rep=1/3: fit_s=0.0574 local=0.0561 coll=0.0070 obs/rank=193670
+E4 ranks=3 threads=32 rep=2/3: fit_s=0.0574 local=0.0561 coll=0.0065 obs/rank=193670
+E4 ranks=3 threads=32 rep=3/3: fit_s=0.0572 local=0.0559 coll=0.0068 obs/rank=193670
+E4 ranks=2 threads=48 rep=1/3: fit_s=0.0557 local=0.0542 coll=0.0028 obs/rank=290506
+E4 ranks=2 threads=48 rep=2/3: fit_s=0.0593 local=0.0584 coll=0.0039 obs/rank=290506
+E4 ranks=2 threads=48 rep=3/3: fit_s=0.0556 local=0.0542 coll=0.0030 obs/rank=290506
+E4 ranks=1 threads=96 rep=1/3: fit_s=0.0647 local=0.0630 coll=0.0000 obs/rank=581012
+E4 ranks=1 threads=96 rep=2/3: fit_s=0.0646 local=0.0628 coll=0.0000 obs/rank=581012
+E4 ranks=1 threads=96 rep=3/3: fit_s=0.0666 local=0.0649 coll=0.0000 obs/rank=581012
+runner_exit=0 rows=36
+      ======================================================================================
+     Resource Usage on 2026-11-06 03:52:51.797595:
+     JobId: 1034404.venus01  				 Project: _pbs_project_default 
+     Submission Host: atlas8-c01 
+     Exit Status: 0
+     NCPUs Requested: 96 				 NCPUs Used: 96
+     Memory Requested: 64gb 				 Memory Used: 857260kb 
+     Vmem Used: 71765948kb
+     CPU Time Used: 00:31:03 
+     Walltime requested: 01:00:00 			 Walltime Used: 00:01:28
+     Submit Time:  Fri Nov  6 00:03:12 2026 		 Start Time: Fri Nov  6 03:51:23 2026 
+     End Time: Fri Nov  6 03:52:51 2026 
+     Execution Nodes Used: (cnode-33-43-53:ncpus=96:mem=67108864kb)
+     ======================================================================================
