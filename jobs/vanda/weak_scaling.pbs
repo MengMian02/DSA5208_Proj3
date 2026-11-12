@@ -1,0 +1,29 @@
+#!/bin/bash
+#PBS -N km-e3-weak
+#PBS -P personal-e0550588
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=02:30:00
+#PBS -l select=4:ncpus=64:mpiprocs=64:ompthreads=1:mem=200gb
+#PBS -l place=scatter
+#PBS -q auto
+#
+# E3 MPI weak scaling to 256 ranks: 50000 deterministically generated
+# observations per rank = 12.8 M logical observations at 256 ranks.
+# Each rank holds its own copy of the 252 MB preprocessed source matrix
+# (256 x 252 MB = 64 GB spread over 4 nodes), hence the 200 GB per node.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common.sh
+preflight
+build_cpu
+
+OUT=$(job_results_path e3_weak)
+SOURCE_BIN="$WORKDIR/cache/covtype_source.bin"
+echo "results=$OUT source_bin=$SOURCE_BIN"
+python3 scripts/run_mpi.py --experiment weak \
+  --ranks "${RANKS:-1,2,4,8,16,32,64,128,256}" --per-rank "${PER_RANK:-50000}" \
+  --source-bin "$SOURCE_BIN" --repetitions "${REPS:-3}" --k 7 --max-iter 30 \
+  --nodes 4 --binding core --results "$OUT"
+status=$?
+if [ -f "$OUT" ]; then echo "runner_exit=$status rows=$(($(wc -l < "$OUT") - 1))"; else echo "runner_exit=$status rows=NO_CSV"; fi
+exit $status

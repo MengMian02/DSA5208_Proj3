@@ -1,0 +1,26 @@
+#!/bin/bash
+#PBS -N km-e4-hyb72
+#PBS -P personal-e0550588
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=01:30:00
+#PBS -l select=1:ncpus=72:mpiprocs=18:ompthreads=4:mem=200gb
+#PBS -q auto_free
+#
+# E4 hybrid layouts inside one 72-core node (the node size), on the free
+# queue. This is the original 72-core comparison from the experiment plan and
+# it complements the 256-core cross-node sweep: here ranks x threads = 72 and
+# nothing crosses a node boundary.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common.sh
+preflight
+build_cpu
+
+OUT=$(job_results_path e4_hybrid72)
+LAYOUTS="72x1,36x2,24x3,18x4,12x6,9x8,6x12,4x18,3x24,2x36,1x72"
+echo "results=$OUT layouts=${LAYOUTS:-$LAYOUTS}"
+python3 scripts/run_mpi.py --experiment hybrid --layouts "${LAYOUTS:-$LAYOUTS}" \
+  --repetitions "${REPS:-3}" --k 7 --max-iter 30 --nodes 1 --binding ppr --results "$OUT"
+status=$?
+if [ -f "$OUT" ]; then echo "runner_exit=$status rows=$(($(wc -l < "$OUT") - 1))"; else echo "runner_exit=$status rows=NO_CSV"; fi
+exit $status

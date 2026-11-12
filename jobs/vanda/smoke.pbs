@@ -1,0 +1,47 @@
+#!/bin/bash
+#PBS -N km-smoke
+#PBS -P personal-e0550588
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:40:00
+#PBS -l select=1:ncpus=12:mpiprocs=12:ompthreads=1:mem=40gb
+# Execution queues are from_route_only on Vanda: jobs are submitted to a route
+# queue and PBS routes them. auto_free -> cpu_serial/cpu_parallel (charge 0).
+#PBS -q auto_free
+#
+# Correctness gate before any benchmark: builds on the compute node (Vanda
+# policy), prints the real CPU topology, then checks serial / OpenMP / MPI /
+# hybrid / weak-scaling agreement on a 20000-observation Covertype subset.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common.sh
+preflight
+build_cpu
+
+echo "== node topology =="
+hostname
+lscpu | egrep "Model name|Socket|Core\(s\) per socket|Thread\(s\) per core|CPU\(s\)|NUMA node"
+free -g | head -2
+echo "== allocation =="
+sort "$PBS_NODEFILE" | uniq -c
+
+echo "== scripts/smoke_test.py =="
+python3 scripts/smoke_test.py 2>&1 | tee "$LOGS_DIR/smoke_test_${PBS_JOBID}.log"
+smoke_rc=${PIPESTATUS[0]}
+
+echo "== extra hash checks =="
+SERIAL_HASH=$(./kmeans_serial data/covtype.data 7 10 42 --fixed-iterations --rows 20000 | sed -n 's/^label_hash=//p')
+echo "serial_hash=$SERIAL_HASH"
+for ranks in 8 12; do
+  H=$(OMP_NUM_THREADS=1 mpirun -np $ranks $MPI_FLAGS ./kmeans_mpi data/covtype.data 7 10 42 \
+      --fixed-iterations --rows 20000 | sed -n 's/^label_hash=//p')
+  echo "mpi ${ranks}x1 hash=$H"
+  [ "$H" = "$SERIAL_HASH" ] || { echo "MISMATCH mpi ${ranks}x1" >&2; smoke_rc=1; }
+done
+W1=$(mpirun -np 1 $MPI_FLAGS ./kmeans_mpi data/covtype.data 7 5 42 --fixed-iterations --weak-per-rank 20000 | sed -n 's/^label_hash=//p')
+W4=$(mpirun -np 4 $MPI_FLAGS ./kmeans_mpi data/covtype.data 7 5 42 --fixed-iterations --weak-per-rank 5000 | sed -n 's/^label_hash=//p')
+echo "weak 1x20000=$W1 4x5000=$W4"
+[ "$W1" = "$W4" ] || { echo "WEAK MISMATCH" >&2; smoke_rc=1; }
+
+echo "smoke_rc=$smoke_rc"
+if [ "$smoke_rc" -eq 0 ]; then echo "SMOKE TEST PASSED"; else echo "SMOKE TEST FAILED"; fi
+exit "$smoke_rc"

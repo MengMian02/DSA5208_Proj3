@@ -1,0 +1,29 @@
+#!/bin/bash
+#PBS -N km-e4-hyb256
+#PBS -P personal-e0550588
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=02:00:00
+#PBS -l select=4:ncpus=64:mpiprocs=64:ompthreads=64:mem=100gb
+#PBS -l place=scatter
+#PBS -q auto
+#
+# E4 hybrid MPI+OpenMP at a fixed 256-core budget over 4 nodes. Every layout
+# has ranks x threads = 256 and ranks >= 4, so each node hosts at least one
+# rank and no rank asks for more threads than a node has cores (72).
+# Binding is ppr:<ranks-per-node>:node:pe=<threads> so an OpenMP team is
+# never pinned onto a single core.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common.sh
+preflight
+build_cpu
+
+OUT=$(job_results_path e4_hybrid256)
+LAYOUTS="256x1,128x2,64x4,32x8,16x16,8x32,4x64"
+echo "results=$OUT layouts=${LAYOUTS:-$LAYOUTS}"
+python3 scripts/run_mpi.py --experiment hybrid --layouts "${LAYOUTS:-$LAYOUTS}" \
+  --repetitions "${REPS:-3}" --k 7 --max-iter 30 --nodes 4 --binding ppr \
+  --results "$OUT"
+status=$?
+if [ -f "$OUT" ]; then echo "runner_exit=$status rows=$(($(wc -l < "$OUT") - 1))"; else echo "runner_exit=$status rows=NO_CSV"; fi
+exit $status

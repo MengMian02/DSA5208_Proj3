@@ -1,0 +1,23 @@
+#!/bin/bash
+#PBS -N km-e1-serial
+#PBS -P personal-e0550588
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=01:30:00
+#PBS -l select=1:ncpus=1:mpiprocs=1:mem=16gb
+#PBS -q auto_free
+#
+# E1 serial scaling. auto_free routes a 1-core job to cpu_serial (ncpus=1,
+# mem<=20gb), which is the only place a single-core job can run.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common.sh
+preflight
+build_cpu
+
+OUT=$(job_results_path e1_serial)
+echo "results=$OUT"
+python3 scripts/run_e1.py --implementation serial --grid both \
+  --repetitions "${REPS:-3}" --max-iter 30 --results "$OUT"
+status=$?
+if [ -f "$OUT" ]; then echo "runner_exit=$status rows=$(($(wc -l < "$OUT") - 1))"; else echo "runner_exit=$status rows=NO_CSV"; fi
+exit $status

@@ -1,0 +1,55 @@
+#!/bin/bash
+#PBS -N km-diag2b
+#PBS -P personal-e0550588
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:20:00
+#PBS -l select=2:ncpus=4:mpiprocs=2:ompthreads=1:mem=8gb
+#PBS -l place=scatter
+#PBS -q auto_free
+#
+# Two-node launch diagnostic, take 2.
+# Take 1 revealed that "select=2" is two CHUNKS, not two nodes: PBS packed both
+# chunks onto one host, so the ppr constraint rejected every launch. place=scatter
+# forces one chunk per distinct vnode, which is what a multi-node test needs.
+# This run therefore proves first that two nodes are actually allocated, then
+# tries each launch path with 'hostname' as the payload, then validates the
+# surviving path with the real binary.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common.sh
+preflight
+
+APP="$PWD/kmeans_mpi"
+ARGS="data/covtype.data 7 5 42 --fixed-iterations --rows 2000"
+
+echo "== nodes actually allocated =="
+sort "$PBS_NODEFILE" | uniq -c
+echo "== identity / resolution =="
+echo "hostname=$(hostname) fqdn=$(hostname -f 2>/dev/null)"
+for h in $(sort -u "$PBS_NODEFILE"); do getent hosts "$h" | head -1; done
+
+LOCAL=$("$APP" $ARGS | sed -n 's/^label_hash=//p')
+echo "local_hash=$LOCAL"
+
+try() {
+  name="$1"; shift
+  out=$("$@" 2>&1); rc=$?
+  echo "--- $name rc=$rc ---"
+  printf '%s\n' "$out" | grep -vE "mca_base_component|^\\[" | head -6
+}
+
+echo "== A: default launch =="
+try A mpirun -np 4 hostname
+echo "== B: expose libpbs so TM/ras integrate with PBS =="
+( export LD_LIBRARY_PATH=/opt/pbs/lib:$LD_LIBRARY_PATH; try B mpirun -np 4 hostname )
+echo "== C: hostfile of upper-case short names =="
+awk -F. '{print toupper($1)" slots=4"}' "$PBS_NODEFILE" | sort -u > /tmp/hB; cat /tmp/hB
+try C mpirun --hostfile /tmp/hB -np 4 hostname
+echo "== D: raw PBS nodefile =="
+try D mpirun --hostfile "$PBS_NODEFILE" -np 4 hostname
+
+echo "== validate the app on the best surviving path =="
+( export LD_LIBRARY_PATH=/opt/pbs/lib:$LD_LIBRARY_PATH
+  H=$(mpirun -np 4 "$APP" $ARGS 2>/dev/null | sed -n 's/^label_hash=//p')
+  echo "B_app_hash=$H  matches_local=$([ "$H" = "$LOCAL" ] && echo yes || echo no)" )
+DIAGNOSTIC DONE

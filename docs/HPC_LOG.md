@@ -61,3 +61,39 @@ Open items:
   blocked on cross-node orted connectivity; single-node hybrid covers all 12
   rank/thread layouts.
 
+
+## 2026-11-12 - Vanda (PBS Pro) first submission round
+
+Probe findings (login stdct-login-01, RHEL 9.4):
+* Scheduler is **PBS Pro**, server stdct-mgmt-02. The earlier SLURM scripts for
+  Vanda were wrong: Slurm binaries exist under /cm/shared/apps/slurm but there
+  is no slurm.conf and the controller cannot be resolved, so those scripts were
+  deleted. /opt/pbs is the live client.
+* Execution queues are from_route_only, so jobs are submitted to route queues:
+  auto_free -> cpu_serial / cpu_parallel / gpu (charge rate 0);
+  auto -> batch_cpu / batch_gpu (charge rate 1).
+* cpu_parallel caps a job at 160 ncpus, so 256 cores is impossible there: a
+  256-core job sent to auto_free is refused by every destination. batch_cpu
+  (ncpus <= 720, nodect <= 10) is the only route to 256 cores.
+* Compute nodes: Intel Xeon Gold 6438N, 2 x 32 cores, SMT off, ~503 GB RAM.
+* Compilation must happen on a compute node (login and compute architectures
+  differ); system gcc 11.4.1, MPI from openmpi/gcc/64/4.1.8, python3 3.9.18
+  without pandas/matplotlib so the analysis stays on the laptop.
+* OpenMPI cannot load its PBS integration (libpbs.so.0 unavailable), so it does
+  not learn the node list from PBS and a multi-node launch needs an explicit
+  --hostfile "$PBS_NODEFILE". The job scripts pass it.
+
+| Job | Purpose | Resources | State |
+|---|---|---|---|
+| 1546643 | 12-core correctness gate | cpu_parallel, 1 node | exit 0, PASSED (serial, OpenMP, MPI 8/12, hybrid, weak all matched hash 13331398156540273710) |
+| 1546646 | E1 serial scaling | cpu_serial, 1 cpu | queued |
+| 1546647 | E2 strong scaling to 256 | batch_cpu, 4 x 64 cpus | queued |
+| 1546648 | E3 weak scaling to 256 ranks | batch_cpu, 4 x 64 cpus | queued |
+| 1546649 | E4 hybrid at 256 cores | batch_cpu, 4 x 64 cpus | queued |
+| 1546650 | E4 hybrid inside one 72/64-core node | cpu_parallel, 1 x 72 cpus | queued |
+
+Unverified path: cross-node MPI. The smoke gate was single-node; 128- and
+256-rank points depend on ssh/orted between compute nodes, which cannot be
+tested without a multi-node allocation. If those ranks fail, the log and the
+job output will show it and the single-node points still stand.
+

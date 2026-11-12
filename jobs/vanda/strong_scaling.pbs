@@ -1,0 +1,31 @@
+#!/bin/bash
+#PBS -N km-e2-strong
+#PBS -P personal-e0550588
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=02:00:00
+#PBS -l select=4:ncpus=64:mpiprocs=64:ompthreads=1:mem=100gb
+#PBS -l place=scatter
+#PBS -q auto
+#
+# E2 MPI strong scaling to 256 cores (the required minimum).
+# Vanda compute nodes have 72 cores, so 4 nodes x 64 cores = 256 ranks leaves
+# 8 cores per node for the OS. auto routes to batch_cpu because cpu_parallel
+# caps a job at 160 ncpus (verified: a 256-core job sent to auto_free is
+# rejected by every destination).
+# One job runs the whole sweep, so every point sees the same nodes, the same
+# interconnect and the same filesystem cache state.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common.sh
+preflight
+build_cpu
+
+OUT=$(job_results_path e2_strong)
+echo "results=$OUT"
+python3 scripts/run_mpi.py --experiment strong \
+  --ranks "${RANKS:-1,2,4,8,16,32,64,128,256}" \
+  --repetitions "${REPS:-3}" --k 7 --max-iter 30 --nodes 4 --binding core \
+  --results "$OUT"
+status=$?
+if [ -f "$OUT" ]; then echo "runner_exit=$status rows=$(($(wc -l < "$OUT") - 1))"; else echo "runner_exit=$status rows=NO_CSV"; fi
+exit $status
