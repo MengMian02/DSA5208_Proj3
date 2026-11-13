@@ -1,0 +1,28 @@
+#!/bin/bash
+#PBS -N km-e3-s8x32
+#PBS -P personal-e0550588
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:45:00
+#PBS -l select=8:ncpus=32:mpiprocs=32:ompthreads=1:mem=150gb
+#PBS -l place=scatter
+#PBS -q auto
+#
+# E3 weak scaling, 256 ranks as 8 nodes x 32 cpus (see the E2 8x32 note).
+# A separate source cache is used on purpose: the 4 x 64 job may run at the
+# same time and both would otherwise write cache/covtype_source.bin.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common.sh
+preflight
+build_cpu
+
+OUT=$(job_results_path e3_weak_8x32)
+SOURCE_BIN="$WORKDIR/cache/covtype_source_8x32.bin"
+echo "results=$OUT source_bin=$SOURCE_BIN"
+python3 scripts/run_mpi.py --experiment weak \
+  --ranks "${RANKS:-1,2,4,8,16,32,64,128,256}" --per-rank "${PER_RANK:-50000}" \
+  --source-bin "$SOURCE_BIN" --repetitions "${REPS:-3}" --k 7 --max-iter 30 \
+  --nodes 8 --binding core --results "$OUT"
+status=$?
+if [ -f "$OUT" ]; then echo "runner_exit=$status rows=$(($(wc -l < "$OUT") - 1))"; else echo "runner_exit=$status rows=NO_CSV"; fi
+exit $status

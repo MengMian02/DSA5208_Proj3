@@ -1,0 +1,27 @@
+#!/bin/bash
+#PBS -N km-e4-s8x32
+#PBS -P personal-e0550588
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:40:00
+#PBS -l select=8:ncpus=32:mpiprocs=32:ompthreads=32:mem=100gb
+#PBS -l place=scatter
+#PBS -q auto
+#
+# E4 hybrid at 256 cores as 8 nodes x 32 cpus.
+# Layouts must satisfy ranks x threads = 256 with ranks >= 8 (at least one rank
+# per node) and threads <= 32 (the per-node core budget). That excludes 4x64,
+# which would put a 64-thread team on a 32-core node.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common.sh
+preflight
+build_cpu
+
+OUT=$(job_results_path e4_hybrid_8x32)
+LAYOUTS="256x1,128x2,64x4,32x8,16x16,8x32"
+echo "results=$OUT layouts=${LAYOUTS:-$LAYOUTS}"
+python3 scripts/run_mpi.py --experiment hybrid --layouts "${LAYOUTS:-$LAYOUTS}" \
+  --repetitions "${REPS:-3}" --k 7 --max-iter 30 --nodes 8 --binding ppr --results "$OUT"
+status=$?
+if [ -f "$OUT" ]; then echo "runner_exit=$status rows=$(($(wc -l < "$OUT") - 1))"; else echo "runner_exit=$status rows=NO_CSV"; fi
+exit $status

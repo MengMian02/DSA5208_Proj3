@@ -23,11 +23,17 @@
 
 module load openmpi/gcc/64/4.1.8 2>/dev/null
 
+# Only MULTI-NODE launches need PBS's TM integration. A single-node job that
+# exposes libpbs wedged inside mpirun with zero CPU time (job 1551059), while a
+# single-node job without it launches fine (smoke job 1546643). So gate it on the
+# allocation actually spanning more than one host.
 if [ -n "${PBS_NODEFILE:-}" ] && [ -d /opt/pbs/lib ]; then
-  case ":$LD_LIBRARY_PATH:" in
-    *":/opt/pbs/lib:"*) ;;
-    *) export LD_LIBRARY_PATH=/opt/pbs/lib:$LD_LIBRARY_PATH ;;
-  esac
+  if [ "$(sort -u "$PBS_NODEFILE" | wc -l)" -gt 1 ]; then
+    case ":$LD_LIBRARY_PATH:" in
+      *":/opt/pbs/lib:"*) ;;
+      *) export LD_LIBRARY_PATH=/opt/pbs/lib:$LD_LIBRARY_PATH ;;
+    esac
+  fi
 fi
 
 export OMP_NUM_THREADS=${OMP_NUM_THREADS:-1}

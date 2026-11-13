@@ -97,3 +97,41 @@ Unverified path: cross-node MPI. The smoke gate was single-node; 128- and
 tested without a multi-node allocation. If those ranks fail, the log and the
 job output will show it and the single-node points still stand.
 
+
+## 2026-11-13 - Vanda round 2: launch-policy fix and queue diagnosis
+
+The three 256-core jobs submitted on 12 Nov (1547713/4/5) ran at 19:22 and
+failed completely, producing no CSV. Root cause found with a dedicated 2-node
+diagnostic (job 1547708) rather than guessed:
+
+* PBS "select=N" means N CHUNKS, not N nodes. Without "-l place=scatter" both
+  chunks landed on one host, so every ppr-based launch was rejected. All
+  multi-node scripts now carry place=scatter.
+* OpenMPI's ras_tm/plm_tm plugins cannot load without PBS's libpbs, so mpirun
+  fell back to ssh+orted, which fails here ("orted: command not found"), and
+  plain mpirun silently put every rank on one node. Exposing /opt/pbs/lib makes
+  OpenMPI use PBS's TM API: ranks then split across nodes and the application
+  hash matches the single-process run exactly. --hostfile is no longer used.
+
+Queue diagnosis on 13 Nov (all four jobs queued, no holds):
+* cpu_serial and cpu_parallel are bound to node pool cpu_free (24 nodes: 20 x 64
+  cores, 3 x 72); batch_cpu to cpu_node (199 nodes, mostly 72 cores).
+* E4-72 asked for 72 cores from cpu_free, i.e. it competed for 3 of 24 nodes,
+  and reported "Insufficient amount of resource: node_pool". Rescaled to a
+  64-core budget (fits 20 nodes) with layouts 64x1..1x64.
+* The 256-core jobs reported "Insufficient amount of resource: ncpus" while 38
+  nodes had >=64 free cores: all our jobs sit at Priority = 0, the scheduling
+  cycle is 20 min, and batch_cpu had 480 jobs queued against 166 running.
+  Walltime cut from 2 h to 40/45 min so backfill can place them.
+* Self-imposed limit worth remembering: max_run_res.ncpus = 720 per user on
+  batch_cpu, so only two of the three 256-core jobs can ever run at once.
+
+Round 2 submissions (after cancelling 1546650/1547713/1547714/1547715):
+
+| Job | Experiment | Queue / pool | Shape | Walltime |
+|---|---|---|---|---|
+| 1551056 | E2 strong -> 256 ranks | batch_cpu / cpu_node | 4 x 64 cpus | 00:40 |
+| 1551057 | E3 weak -> 256 ranks | batch_cpu / cpu_node | 4 x 64 cpus | 00:45 |
+| 1551058 | E4 hybrid at 256 cores | batch_cpu / cpu_node | 4 x 64 cpus | 00:40 |
+| 1551059 | E4 hybrid in one node | cpu_parallel / cpu_free | 1 x 64 cpus | 01:30 |
+

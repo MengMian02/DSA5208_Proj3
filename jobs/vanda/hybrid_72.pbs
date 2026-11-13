@@ -4,20 +4,21 @@
 #PBS -j oe
 #PBS -k oed
 #PBS -l walltime=01:30:00
-#PBS -l select=1:ncpus=72:mpiprocs=18:ompthreads=4:mem=200gb
+#PBS -l select=1:ncpus=64:mpiprocs=16:ompthreads=4:mem=200gb
 #PBS -q auto_free
 #
-# E4 hybrid layouts inside one 72-core node (the node size), on the free
-# queue. This is the original 72-core comparison from the experiment plan and
-# it complements the 256-core cross-node sweep: here ranks x threads = 72 and
-# nothing crosses a node boundary.
+# E4 hybrid layouts inside ONE node of the free pool, at ranks x threads = 64.
+# cpu_parallel is bound to node pool cpu_free, which has 24 nodes: 20 with 64
+# cores and only 3 with 72. A 72-core request therefore competes for 3 nodes
+# and sat still with "Insufficient amount of resource: node_pool"; a 64-core
+# request fits 20 of them. Nothing crosses a node boundary in any layout.
 cd "$PBS_O_WORKDIR" || exit 1
 . jobs/vanda/common.sh
 preflight
 build_cpu
 
 OUT=$(job_results_path e4_hybrid72)
-LAYOUTS="72x1,36x2,24x3,18x4,12x6,9x8,6x12,4x18,3x24,2x36,1x72"
+LAYOUTS="64x1,32x2,16x4,8x8,4x16,2x32,1x64"
 echo "results=$OUT layouts=${LAYOUTS:-$LAYOUTS}"
 python3 scripts/run_mpi.py --experiment hybrid --layouts "${LAYOUTS:-$LAYOUTS}" \
   --repetitions "${REPS:-3}" --k 7 --max-iter 30 --nodes 1 --binding ppr --results "$OUT"
