@@ -3,7 +3,7 @@
 #PBS -P personal-harry_chen
 #PBS -j oe
 #PBS -k oed
-#PBS -l walltime=00:30:00
+#PBS -l walltime=00:40:00
 #PBS -l select=1:ncpus=64:mpiprocs=64:ompthreads=1:mem=64gb
 #PBS -l place=scatter
 #PBS -q auto_free

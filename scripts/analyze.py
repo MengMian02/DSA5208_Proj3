@@ -378,7 +378,7 @@ def figure_e3(frames):
     ax.set_xscale("log", base=2)
     ax.set_xlabel("MPI ranks (50000 generated observations per rank)")
     ax.set_ylabel("fit time (s, median)")
-    ax.set_title("E3: Vanda MPI weak-scaling runtime (50k/rank, 3 reps)")
+    ax.set_title("E4: Vanda MPI weak-scaling runtime (50k/rank, 3 reps)")
     ax.legend()
 
     ax = axes[1]
@@ -387,7 +387,7 @@ def figure_e3(frames):
     ax.set_xscale("log", base=2)
     ax.set_xlabel("MPI ranks")
     ax.set_ylabel("weak-scaling efficiency E(P) = T(1,N0)/T(P,P*N0) (%)")
-    ax.set_title("E3: weak-scaling efficiency (Vanda)")
+    ax.set_title("E4: weak-scaling efficiency (Vanda)")
     save(fig, "e3_weak_scaling.png")
 
 
@@ -538,14 +538,15 @@ def write_summary(frames, requested=None):
         "e1_serial": ("E1 serial", ["rows", "k"], ["fit_s", "load_s", "preprocess_s", "init_s", "total_s"]),
         "e2_strong": ("E2 MPI strong scaling", ["ranks"], ["fit_s", "local_compute_s", "mpi_reduction_s", "centroid_update_s", "fit_imbalance_s"]),
         "e2_strong_large": ("E2-large MPI strong scaling (10M resampled)", ["ranks"], ["fit_s", "local_compute_s", "mpi_reduction_s", "distribution_s"]),
-        "e3_weak": ("E3 MPI weak scaling", ["ranks", "rows"], ["fit_s", "local_compute_s", "mpi_reduction_s", "distribution_s"]),
+        "e3_weak": ("E4 MPI weak scaling", ["ranks", "rows"], ["fit_s", "local_compute_s", "mpi_reduction_s", "distribution_s"]),
         "e4_hybrid": ("E4 hybrid", ["ranks", "threads"], ["fit_s", "local_compute_s", "mpi_reduction_s", "thread_reduction_s"]),
         "e7_cuda": ("E8 CUDA", ["stage", "rows"], ["fit_s", "cpu_assign_s", "gpu_kernel_s", "upload_s", "readback_s", "accumulate_s", "label_agreement"]),
         "e6_metal": ("E6 Metal", ["stage", "rows"], ["fit_s", "cpu_assign_s", "gpu_kernel_s", "accumulate_s", "label_agreement"]),
     }
     for key, (title, keys, values) in spec.items():
-        if requested and key.split("_")[0] not in requested:
-            continue
+        # Always summarise every measured series; --experiments only restricts
+        # which figures are regenerated. This keeps SUMMARY.md from losing
+        # sections when a single figure is refreshed.
         frame = frames.get(key)
         lines += ["## " + title, ""]
         if frame is None or frame.empty:

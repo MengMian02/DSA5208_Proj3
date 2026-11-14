@@ -252,7 +252,7 @@ def main():
                 failures += 1
                 bencher.record_failure("e" + experiment[-1], command, error)
                 print("FAILED %s: %s" % (label, error), file=sys.stderr)
-                continue
+                break
             rows = int(metrics["rows"])
             row = {
                 "experiment": experiment,

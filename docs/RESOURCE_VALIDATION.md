@@ -35,7 +35,7 @@ oversubscription.
 | E5 | `e5_openmp_hc.pbs` | `auto_free` → cpu_parallel | `1:ncpus=64:mpiprocs=1:ompthreads=1:mem=64gb` | 1 | 64 | 00:40 | 64 GB | yes |
 | E6-256 | `e6_hybrid_256_hc.pbs` | `auto` → batch_cpu | `4:ncpus=64:mpiprocs=64:ompthreads=1:mem=100gb` | 4 | 256 | 00:45 | site hook 444 GB/chunk | yes |
 | E6-128 | `e6_hybrid_128_hc.pbs` | `auto_free` → cpu_parallel | `2:ncpus=64:mpiprocs=64:ompthreads=1:mem=100gb` | 2 | 128 | 00:35 | 100 GB/chunk | yes |
-| E6-64 | `e6_hybrid_64_hc.pbs` | `auto_free` → cpu_parallel | `1:ncpus=64:mpiprocs=64:ompthreads=1:mem=64gb` | 1 | 64 | 00:30 | 64 GB | yes |
+| E6-64 | `e6_hybrid_64_hc.pbs` | `auto_free` → cpu_parallel | `1:ncpus=64:mpiprocs=64:ompthreads=1:mem=64gb` | 1 | 64 | 00:40 | 64 GB | yes |
 | E7 | `e7_layout_hc.pbs` | `auto` → batch_cpu | `8:ncpus=32:mpiprocs=32:ompthreads=1` | 8 | 256 | 00:25 | site hook 222 GB/chunk | yes |
 
 No job requests more than 720 ncpus or 10 chunks. E2/E6-256/E7 are 256-core
@@ -102,7 +102,7 @@ Measured anchors:
 | E3 large 10M 4×64 | 27 rows, 1–256 ranks | ≈ 6 min (E2 part of 1552703) |
 | E4 weak 50k/rank | 27 rows, 1–256 ranks | ≈ 3 min |
 | E5 OpenMP | 42 rows (2 datasets × 7 threads × 3) | estimated 8–12 min |
-| E6 per budget | 18–21 rows + 6–7 preflights | estimated 8–15 min if launcher works |
+| E6 per budget | 18–21 rows + 6–7 preflights | 8–15 min normally; ≤32 min if every layout hits its timeout |
 | E7 | 10 rows + placement prints | estimated 5 min |
 | E0 | build + 20 checks | estimated 5–8 min |
 
