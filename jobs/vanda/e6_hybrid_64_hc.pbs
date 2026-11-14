@@ -29,12 +29,19 @@ export OMP_DYNAMIC=false
 export OMP_PROC_BIND=false
 unset OMP_PLACES
 
+HYBRID_MODE=$(cat "$WORKDIR/HYBRID_LAUNCH" 2>/dev/null || true)
+if [ -z "$HYBRID_MODE" ]; then
+  echo "ERROR: HYBRID_LAUNCH missing; E0 did not certify a mapping" >&2
+  exit 3
+fi
+echo "hybrid_mapping=$HYBRID_MODE"
+
 OUT=$(job_results_path e6_hybrid_64)
 echo "results=$OUT"
 python3 scripts/run_mpi.py --experiment hybrid \
   --layouts 64x1,32x2,16x4,8x8,4x16,2x32,1x64 \
   --resampled-total 10000000 --repetitions 3 --k 7 --max-iter 30 \
-  --nodes 1 --binding ppr-none --preflight-rows 20000 \
+  --nodes 1 --binding "$HYBRID_MODE" --preflight-rows 20000 \
   --preflight-timeout 90 --timeout 180 \
   --dataset-label covtype_resampled_10M_64core --results "$OUT"
 status=$?

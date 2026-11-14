@@ -81,9 +81,11 @@ Evidence:
   diagnostics `diag_mapping.pbs` / `diag_pe.pbs` found that every `pe=` form
   hangs or is rejected under this launcher.
 
-Fix: production hybrid uses `ppr:R:node` **without** `pe=`, plus
-`--bind-to none`, `OMP_PROC_BIND=false`, unset `OMP_PLACES`, and an exclusive
-PBS allocation. Every layout now gets a one-iteration preflight with a hard
+Fix: E0 tests `ppr:R:node`, `node`, `slot`, `none` and `core` mappings without
+`pe=`, then writes the first balanced working mapping to `HYBRID_LAUNCH`.
+Production hybrid reads that file, uses `--bind-to none`,
+`OMP_PROC_BIND=false`, an exclusive PBS allocation, and a preflight/timeout per
+layout. Every layout now gets a one-iteration preflight with a hard
 timeout; a failing layout is logged and skipped.
 
 ### C3. PBS allocation metadata implied impossible thread counts (confirmed)

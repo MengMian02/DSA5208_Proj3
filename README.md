@@ -238,9 +238,10 @@ binary risk. The current kit uses only the `harry_chen` account and workspace:
 | `jobs/vanda/e6_hybrid_{64,128,256}_hc.pbs` | E6 hybrid at fixed 64/128/256-core budgets, 10M |
 | `jobs/vanda/e7_layout_hc.pbs` | E7 8×32 rank-placement diagnostic |
 
-All production jobs depend on E0 (`-W depend=afterok:<E0>`). Hybrid uses
-`--map-by ppr:R:node --bind-to none`, `OMP_PROC_BIND=false`, a one-iteration
-preflight and a 180 s per-run timeout; the old `pe=T` mapping hangs under
-Vanda's OpenMPI 4.1.8 + PBS TM launch. `common_harry.sh` performs `make -B cpu`
+All production jobs depend on E0 (`-W depend=afterok:<E0>`). E0 certifies the hybrid mapping
+(`ppr:R:node`, `node` or `slot` with `--bind-to none`) and writes it to
+`HYBRID_LAUNCH`; E6 reads it, sets `OMP_PROC_BIND=false`, and uses a
+one-iteration preflight plus a 180 s per-run timeout. The old `pe=T` mapping
+hangs under Vanda's OpenMPI 4.1.8 + PBS TM launch. `common_harry.sh` performs `make -B cpu`
 and writes `BUILD_INFO.md5`/`BUILD_INFO.txt`; every job verifies the checksums
 before running. `SOURCE_VERSION` records the branch/commit used for the build.

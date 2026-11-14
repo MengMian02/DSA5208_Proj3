@@ -121,9 +121,11 @@ E2, E5, E6-64/128/256 and E7 are submitted with
 * fixed-total 200003 hash equality,
 * weak identity 1×20000 vs 4×5000,
 * two-host placement,
-* at least one multi-node hybrid launch with `total_workers=8`.
+* at least one balanced multi-node hybrid mapping with `total_workers=8`.
 
-If E0 fails, no production job is released.
+E0 writes the first working balanced mapping (`ppr:R:node`, `node` or `slot`,
+with `--bind-to none`) to `HYBRID_LAUNCH`; E6 jobs refuse to run without that
+file. If E0 fails, no production job is released.
 
 ## 7. Scheduler state at the time of writing
 

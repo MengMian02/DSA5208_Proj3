@@ -86,27 +86,61 @@ unset OMP_PLACES
 run_hybrid_variant() {
   name="$1"; shift
   echo "--- $name ---"
+  placement=$(timeout -k 5 45 mpirun "$@" -np 4 hostname 2>/dev/null | sort | uniq -c)
+  hosts=$(printf '%s\n' "$placement" | sed '/^$/d' | wc -l)
+  echo "placement_hosts=$hosts"
+  printf '%s\n' "$placement"
   out=$(timeout -k 5 90 mpirun "$@" -np 4 ./kmeans_hybrid data/covtype.data 7 5 42 \
         --fixed-iterations --rows 20000 2>&1); status=$?
   hash=$(printf '%s\n' "$out" | hash_of)
   workers=$(printf '%s\n' "$out" | tr ' ' '\n' | sed -n 's/^total_workers=//p' | head -1)
   echo "status=$status hash=$hash workers=$workers"
-  if [ $status -eq 0 ] && [ "$hash" = "$S20" ] && [ "$workers" = "8" ]; then
+  if [ $status -eq 0 ] && [ "$hash" = "$S20" ] && [ "$workers" = "8" ] \
+     && [ "$hosts" -eq 2 ]; then
     echo "HYBRID_VARIANT_OK=$name"
-    [ "$name" = "ppr2_none" ] && PPR_OK=1
+    case "$name" in
+      ppr2_none) PPR_OK=1 ;;
+      node_none) NODE_OK=1 ;;
+      slot_none) SLOT_OK=1 ;;
+      none) NONE_OK=1 ;;
+      core) CORE_OK=1 ;;
+    esac
   fi
   printf '%s\n' "$out" | grep -vE "mca_base|^\[" | tail -3
 }
-PPR_OK=0
+PPR_OK=0; NODE_OK=0; SLOT_OK=0; NONE_OK=0; CORE_OK=0
 run_hybrid_variant ppr2_none --map-by ppr:2:node --bind-to none
+run_hybrid_variant node_none --map-by node --bind-to none
+run_hybrid_variant slot_none --map-by slot --bind-to none
 run_hybrid_variant none --bind-to none
 run_hybrid_variant core --map-by core --bind-to core
-run_hybrid_variant slot_none --map-by slot --bind-to none
-[ "$PPR_OK" -eq 1 ] || { echo "ERROR: production mapping ppr2_none failed"; rc=1; }
 
-echo "== resampled hybrid ppr2-none =="
-RH=$(timeout -k 5 120 mpirun --map-by ppr:2:node --bind-to none -np 4 ./kmeans_hybrid \
-     data/covtype.data 7 5 42 --fixed-iterations --resampled-total 200003 2>/dev/null | hash_of)
+HYBRID_MODE=""
+if [ "$PPR_OK" -eq 1 ]; then HYBRID_MODE=ppr-none
+elif [ "$NODE_OK" -eq 1 ]; then HYBRID_MODE=node-none
+elif [ "$SLOT_OK" -eq 1 ]; then HYBRID_MODE=slot-none
+elif [ "$NONE_OK" -eq 1 ]; then HYBRID_MODE=none
+else
+  echo "ERROR: no multi-node hybrid mapping worked"; rc=1
+fi
+echo "HYBRID_MODE=$HYBRID_MODE"
+[ -n "$HYBRID_MODE" ] && echo "$HYBRID_MODE" > "$WORKDIR/HYBRID_LAUNCH"
+
+case "$HYBRID_MODE" in
+  ppr-none) HF="--map-by ppr:2:node --bind-to none" ;;
+  node-none) HF="--map-by node --bind-to none" ;;
+  slot-none) HF="--map-by slot --bind-to none" ;;
+  none) HF="--bind-to none" ;;
+  core) HF="--map-by core --bind-to core" ;;
+  *) HF="" ;;
+esac
+
+echo "== resampled hybrid with selected mapping =="
+RH=""
+if [ -n "$HF" ]; then
+  RH=$(timeout -k 5 120 mpirun $HF -np 4 ./kmeans_hybrid \
+       data/covtype.data 7 5 42 --fixed-iterations --resampled-total 200003 2>/dev/null | hash_of)
+fi
 echo "hybrid_rs_hash=$RH expected_rs_hash=$RS"
 [ "$RH" = "$RS" ] || { echo "MISMATCH hybrid resampled"; rc=1; }
 

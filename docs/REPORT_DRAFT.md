@@ -199,11 +199,12 @@ count. No OpenMP numbers are invented here.
 CSV (job 1554129) has 21 rows but 256×1 fit values 0.0273/0.7690/1.0875 s and
 8×32 values around 3.5 s; the 128-core job 1552704 produced no rows and zero
 CPU time. Root cause is the Vanda launch mapping: `ppr:R:node:pe=T` with
-`--bind-to core` hangs under OpenMPI 4.1.8 + PBS TM. The repair uses
-`ppr:R:node --bind-to none`, `OMP_PROC_BIND=false`, a one-iteration preflight
+`--bind-to core` hangs under OpenMPI 4.1.8 + PBS TM. The repair uses the mapping certified by E0
+(`ppr:R:node`/`node`/`slot` with `--bind-to none`), `OMP_PROC_BIND=false`, a one-iteration preflight
 and a 180 s timeout per run, with worker-count verification. Independent
-64/128/256-core jobs are queued; no hybrid conclusion is claimed until they
-produce valid rows.
+64/128/256-core jobs are prepared but not yet submitted while the Vanda PBS
+server is unreachable; no hybrid conclusion is claimed until they produce
+valid rows.
 
 ## 12. E7 — node layout and communication
 

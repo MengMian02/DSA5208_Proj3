@@ -20,8 +20,9 @@ fi
 existing=$(qstat -u harry_chen 2>/dev/null)
 submit() {
   name="$1"; script="$2"; depend="${3:-}"
-  if printf '%s\n' "$existing" | grep -q "$name"; then
-    echo "SKIP $name (already in queue)" | tee -a "$RECORD"
+  jobname=$(sed -n 's/^#PBS -N //p' "$script" | head -1)
+  if [ -n "$jobname" ] && printf '%s\n' "$existing" | grep -q "$jobname"; then
+    echo "SKIP $name ($jobname already in queue)" | tee -a "$RECORD"
     return 0
   fi
   if [ -n "$depend" ]; then

@@ -98,7 +98,8 @@ resampled, 3 reps each, 21 rows per dataset. `run_openmp.py` sets and verifies
 
 Independent jobs at 64, 128 and 256 cores, all on the fixed 10M workload.
 Every layout is `ranks × threads = budget`; per-node cores are budget/nodes.
-The launch is `--map-by ppr:R:node --bind-to none`, `OMP_PROC_BIND=false`,
+The launch uses the mapping certified by E0 (`HYBRID_LAUNCH`; normally
+`--map-by ppr:R:node --bind-to none`), with `OMP_PROC_BIND=false` and
 `OMP_PLACES` unset. Each layout first runs one 20k-observation iteration with
 a 90 s timeout; a failed preflight is recorded and the layout is skipped. Timed
 runs use a 180 s timeout. Expected rows 21/18/21.

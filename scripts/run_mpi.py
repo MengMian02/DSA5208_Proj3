@@ -98,6 +98,10 @@ def case_flags(args, case):
         nodes = max(1, args.nodes)
         per_node = max(1, (case["ranks"] + nodes - 1) // nodes)
         return ["--map-by", "ppr:%d:node" % per_node, "--bind-to", "none"]
+    if args.binding == "node-none":
+        return ["--map-by", "node", "--bind-to", "none"]
+    if args.binding == "slot-none":
+        return ["--map-by", "slot", "--bind-to", "none"]
     if args.binding == "none":
         return ["--bind-to", "none"]
     if args.experiment == "hybrid" and args.binding == "ppr":
@@ -187,11 +191,13 @@ def main():
                              "multi-node job; Open MPI otherwise sees one node)")
     parser.add_argument("--nodes", type=int, default=1,
                         help="nodes the allocation spans (drives ppr binding)")
-    parser.add_argument("--binding", choices=["core", "ppr", "ppr-none", "none"],
-                        default="core",
+    parser.add_argument("--binding",
+                        choices=["core", "ppr", "ppr-none", "node-none",
+                                 "slot-none", "none"], default="core",
                         help="core: env MPI_FLAGS; ppr-none: ppr:R:node + bind none "
-                             "(validated hybrid path); ppr: legacy pe=T probe; "
-                             "none: bind none only")
+                             "(validated hybrid path); node-none/slot-none: alternate "
+                             "balanced mappings; ppr: legacy pe=T probe; none: bind "
+                             "none only")
     parser.add_argument("--preflight-rows", type=int, default=0,
                         help="hybrid only: run one short launch/placement check per "
                              "layout before the timed repetitions (0 = off)")
