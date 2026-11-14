@@ -45,7 +45,7 @@ build_cpu_force() {
   {
     echo "build_time=$(date -Is)"
     echo "build_host=$(hostname)"
-    echo "source_version=$(cat "$WORKDIR/SOURCE_VERSION" 2>/dev/null || echo MISSING)"
+    echo "source_version=$(tr '\n' ';' < "$WORKDIR/SOURCE_VERSION" 2>/dev/null || echo MISSING)"
     echo "gcc=$(gcc --version 2>/dev/null | head -1)"
     echo "mpicxx=$(mpicxx --version 2>/dev/null | head -1)"
     echo "make_flags=$(grep -E '^BASE_FLAGS' "$WORKDIR/Makefile" 2>/dev/null | head -1)"

@@ -226,8 +226,9 @@ Kernel-only time is never compared with CPU end-to-end time.
 **Apple Metal (M1 Pro, 30 rows):** label agreement 1.0 at every size.
 Stage-B full fit is 0.673 s at 400k vs 0.915 s for stage A; the GPU kernel is
 0.020 s vs 0.079 s CPU assignment. Metal is float32 on a different platform,
-not a Vanda scaling point. The existing Metal figure is
-`figures/e6_cpu_vs_gpu.png`.
+not a Vanda scaling point.
+
+![Metal](../figures/e6_cpu_vs_gpu.png)
 
 ## 14. E9 — real-data Covertype conclusions
 

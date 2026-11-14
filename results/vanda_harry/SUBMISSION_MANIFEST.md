@@ -32,7 +32,7 @@ jobs are prepared and will be submitted only when `qstat -u harry_chen` returns.
 | E0 | build + correctness gate | TBD | 2×8 cores, 25 min | 20k + 200003 | pass/fail | none | NOT_SUBMITTED |
 | E2 | original MPI strong | TBD | 4×64, 25 min | 581,012 | 27 | E0 | NOT_SUBMITTED |
 | E5 | OpenMP scaling | TBD | 1×64, 40 min | 581,012 + 10M | 21+21 | E0 | NOT_SUBMITTED |
-| E6-64 | hybrid | TBD | 1×64, 30 min | 10M | 21 | E0 | NOT_SUBMITTED |
+| E6-64 | hybrid | TBD | 1×64, 40 min | 10M | 21 | E0 | NOT_SUBMITTED |
 | E6-128 | hybrid | TBD | 2×64, 35 min | 10M | 18 | E0 | NOT_SUBMITTED |
 | E6-256 | hybrid | TBD | 4×64, 45 min | 10M | 21 | E0 | NOT_SUBMITTED |
 | E7 | node layout | TBD | 8×32, 25 min | 581,012 | 10 | E0 | NOT_SUBMITTED |
