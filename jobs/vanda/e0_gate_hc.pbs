@@ -93,13 +93,16 @@ run_hybrid_variant() {
   echo "status=$status hash=$hash workers=$workers"
   if [ $status -eq 0 ] && [ "$hash" = "$S20" ] && [ "$workers" = "8" ]; then
     echo "HYBRID_VARIANT_OK=$name"
+    [ "$name" = "ppr2_none" ] && PPR_OK=1
   fi
   printf '%s\n' "$out" | grep -vE "mca_base|^\[" | tail -3
 }
+PPR_OK=0
 run_hybrid_variant ppr2_none --map-by ppr:2:node --bind-to none
 run_hybrid_variant none --bind-to none
 run_hybrid_variant core --map-by core --bind-to core
 run_hybrid_variant slot_none --map-by slot --bind-to none
+[ "$PPR_OK" -eq 1 ] || { echo "ERROR: production mapping ppr2_none failed"; rc=1; }
 
 echo "== resampled hybrid ppr2-none =="
 RH=$(timeout -k 5 120 mpirun --map-by ppr:2:node --bind-to none -np 4 ./kmeans_hybrid \

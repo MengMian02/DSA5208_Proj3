@@ -249,3 +249,21 @@ K-means noise.
 * `results/vanda/vanda_e2_strong_1551056...csv`, `..._8x32_1551069...csv`
 * `results/vanda/e7_cuda_1554475.csv` (30 rows, agreement 1.0 or 0.9999875)
 * `docs/HPC_LOG.md` (PBS findings, 2026-11-13/14)
+
+## 9. Post-repair compile checks and scheduler state
+
+At 18:21 SGT the repaired sources were syntax-checked on the Vanda login node
+with the compute toolchain (`g++` 11.4.1, OpenMPI 4.1.8):
+
+```
+g++     -fsyntax-only kmeans_serial.cpp              OK
+g++     -fopenmp -fsyntax-only kmeans_openmp.cpp     OK
+mpicxx  -fsyntax-only kmeans_mpi.cpp                 OK
+mpicxx  -fopenmp -fsyntax-only kmeans_hybrid.cpp     OK
+python3 -m py_compile scripts/*.py                   OK
+```
+
+No binaries were produced on the login node. At 18:05-18:24 the PBS server
+`stdct-mgmt-02:15001` was closed and `qstat` timed out; the two hung `qsub`
+processes were stopped. The E0/E2/E5/E6/E7 kit is prepared and uploaded, but
+no production job has been submitted while the scheduler is unreachable.

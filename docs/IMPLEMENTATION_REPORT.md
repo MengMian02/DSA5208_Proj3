@@ -389,3 +389,50 @@ Priority order:
     python3 scripts/run_mpi.py --experiment hybrid --ranks 1,2,4 --threads 1,2,4 --max-workers 8 --repetitions 3
     python3 scripts/run_metal.py --rows 20000,50000,100000,200000,400000 --repetitions 3
     python3 scripts/analyze.py
+
+## 2026-11-14 repair and redesign
+
+The 2026-11-05 status above is historical. On 2026-11-14 the project was
+audited again after the teammate CUDA merge and the failed Vanda hybrid jobs.
+
+Confirmed and fixed:
+
+1. **Fixed-total resampling was absent from `main`.** It was recovered from
+   `stash@{0}` and applied on branch `repair-2026-11-14`. `--resampled-total N`
+   now works in serial, OpenMP, MPI and hybrid; MPI/hybrid generate only their
+   own partitions; all rank counts use the same source, mapping and initial
+   centroids.
+2. **Hybrid multi-node launch hung.** `ppr:R:node:pe=T --bind-to core` was
+   replaced by `ppr:R:node --bind-to none`, `OMP_PROC_BIND=false`, an exclusive
+   allocation, a one-iteration preflight and a hard timeout. The runner now
+   verifies `total_workers = ranks × threads`.
+3. **PBS metadata was inconsistent.** Allocation `ompthreads` is 1; per-run
+   `OMP_NUM_THREADS` is set by the runner. No layout exceeds
+   `ncpus/node × nodes`.
+4. **Stale binaries.** `common_harry.sh` does `make -B cpu`, writes
+   `BUILD_INFO.md5`/`BUILD_INFO.txt`, and production jobs verify the checksums.
+5. **Monolithic jobs.** E0/E2/E5/E6-64/E6-128/E6-256/E7 are independent PBS
+   jobs; E6 has per-layout preflight/timeout so one hang cannot destroy the
+   campaign.
+6. **Wrong account/project.** The teammate `personal-e0550588` scripts are not
+   submitted; the harry kit uses `personal-harry_chen` and
+   `/scratch/harry_chen/DSA5208_Proj3`.
+7. **Overflow and CLI edges.** `generated_total`/`materialise_indices` have
+   overflow guards; serial/OpenMP reject the MPI-only `--weak-per-rank`.
+8. **OpenMP runner and real-data analysis** were added (`run_openmp.py`,
+   `analyze_covertype.py`).
+
+Measured data retained:
+
+* E1 39 rows (serial, original + 1M/5M/10M resampled).
+* E3 large 10M 27 rows, 133× / 52% at 256 ranks, one hash.
+* E4 weak 27 rows on 5 heterogeneous nodes, 55.4% at 256.
+* E2 original legacy 27 rows on 5 heterogeneous nodes, same hash as the
+  homogeneous 4×64 and 8×32 runs.
+* E9 converged run, 46 iterations, inertia 3,722,934.178255, ARI 0.0191.
+* CUDA 30 rows, Metal 30 rows.
+
+The old hybrid rows (1554129/1554130) are classified INVALID because of a 40×
+spread in the same layout; they are retained as evidence, not used as scaling
+results. The repaired E0–E7 campaign is gated on E0 and is not claimed complete
+until its CSVs pass `docs/RESULT_VALIDATION.md`.

@@ -201,3 +201,10 @@ was unavailable. Submission of the redesigned campaign is retried only after
 The E0 gate must pass before any production job; the expected result files and
 row counts are listed in `docs/EXPERIMENTS.md` and
 `results/vanda_harry/expected_results.csv`.
+
+At 18:21 SGT the repaired sources passed compile-only checks on the Vanda login
+node with the compute toolchain: `g++ -fsyntax-only` for serial/OpenMP and
+`mpicxx -fsyntax-only` for MPI/hybrid, plus `python3 -m py_compile` for the
+runners. No binaries were produced on the login node. The PBS server remained
+unreachable (`stdct-mgmt-02:15001` closed, `qstat` timeout), so the E0 job and
+the gated campaign are still NOT_SUBMITTED at this checkpoint.
