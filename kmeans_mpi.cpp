@@ -24,6 +24,7 @@ void run(const Options& options, int rank, int ranks) {
     const double program_start = MPI_Wtime();
     const int k = options.k;
     const bool weak = options.weak_per_rank > 0;
+    const bool generated = generated_workload(options);
 
     uint64_t n = 0;          // logical global observation count
     uint64_t source_rows = 0;
@@ -36,7 +37,7 @@ void run(const Options& options, int rank, int ranks) {
 
     const double distribution_start = MPI_Wtime();
 
-    if (!weak) {
+    if (!generated) {
         // Only rank 0 reads and preprocesses the complete matrix. Other ranks
         // receive their rows, so no rank except rank 0 ever holds all observations.
         if (rank == 0) {
@@ -92,7 +93,9 @@ void run(const Options& options, int rank, int ranks) {
         // (source Covertype, seed, global observation count); each rank
         // materialises only its own contiguous global-index block, so nothing
         // is written to disk and no rank holds the expanded dataset.
-        n = options.weak_per_rank * uint64_t(ranks);
+        // Fixed-total resampling keeps n independent of the rank count;
+        // weak scaling keeps the historical per-rank contract.
+        n = generated_total(options, uint64_t(ranks));
 
         if (rank == 0) {
             const double load_start = MPI_Wtime();
@@ -143,6 +146,8 @@ void run(const Options& options, int rank, int ranks) {
         check_mpi(MPI_Bcast(centroids.data(), k * D, MPI_DOUBLE, 0, MPI_COMM_WORLD),
                   "initial centroid broadcast");
 
+        if (n > uint64_t(INT_MAX))
+            throw std::runtime_error("Generated dataset exceeds the MPI int displacement limit");
         const uint64_t base_rows = n / uint64_t(ranks);
         const uint64_t remainder = n % uint64_t(ranks);
         local_rows = base_rows + (uint64_t(rank) < remainder ? 1 : 0);
@@ -156,7 +161,7 @@ void run(const Options& options, int rank, int ranks) {
 
     // Verification hook: write the deterministic local rows in global order so
     // an external checker can confirm the index mapping and the partitioning.
-    if (weak && !options.dump_generated.empty()) {
+    if (generated && !options.dump_generated.empty()) {
         std::vector<int> dump_counts(ranks), dump_displacements(ranks);
         int displacement = 0;
         for (int r = 0; r < ranks; ++r) {
@@ -198,7 +203,7 @@ void run(const Options& options, int rank, int ranks) {
               "generation timing reduction");
 
     // Rank 0 no longer needs the replicated matrix after distribution.
-    if (!weak && rank == 0) std::vector<double>().swap(source);
+    if (!generated && rank == 0) std::vector<double>().swap(source);
 
     std::vector<int> labels(size_t(local_rows), -1);
     std::vector<double> local_sums(size_t(k) * D);

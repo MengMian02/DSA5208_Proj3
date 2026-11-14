@@ -1,0 +1,16 @@
+#!/bin/bash
+#PBS -N km-probe-hc
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:10:00
+#PBS -l select=1:ncpus=1:mpiprocs=1:ompthreads=1:mem=8gb
+#PBS -q auto_free
+cd "$PBS_O_WORKDIR" || exit 1
+echo "job=$PBS_JOBID host=$(hostname) date=$(date -Is)"
+echo "account=$PBS_O_ACCOUNT project=$PBS_O_PROJECT user=$USER"
+module load openmpi/gcc/64/4.1.8 2>&1
+echo "mpicxx=$(command -v mpicxx)"; mpicxx --version | head -1
+echo "gcc=$(gcc --version | head -1)"
+make cpu 2>&1 | tail -20
+ls -l kmeans_serial kmeans_mpi
+./kmeans_serial data/covtype.data 7 3 42 --fixed-iterations --rows 20000 | tail -3

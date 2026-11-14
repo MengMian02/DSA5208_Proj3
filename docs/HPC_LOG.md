@@ -167,3 +167,37 @@ Walltime extension on a running job is impossible here: qalter returns
 "Unauthorized Request". A longer walltime must therefore be chosen at
 submission time.
 
+
+## 2026-11-14 18:00 - harry_chen audit, repair and redesigned campaign
+
+Repository state on arrival: `main` at f70e611, clean tree. The previous local
+`--resampled-total` work was not in `main`; it was recovered from
+`stash@{0}` and applied on branch `repair-2026-11-14` (backup branch
+`backup-before-repair` at f70e611). The teammate CUDA files were preserved.
+
+Previous harry_chen jobs re-examined from their own logs and CSV rows:
+
+| Job | What actually happened |
+|---|---|
+| 1552672 | E2 original: 27/27 rows, 5-node heterogeneous 256 cores, one hash. E3 weak: 27/27 rows, 50k/rank, 55.4% weak efficiency. Exit 0. |
+| 1552703 | E2 large 10M: 27/27 rows, 4x64 GN-A40, one hash, 133x/52% at 256. Then E4 hybrid produced no row and the job was killed at 1821 s. |
+| 1552704 | E4 hybrid 128: no row, cput 00:00:00, killed at 1217 s. Launcher/placement hang, not a K-means failure. |
+
+Root cause confirmed for the hybrid failures: the runner used
+`--map-by ppr:R:node:pe=T --bind-to core`, and the existing hybrid rows are
+internally inconsistent (256x1 fit 0.027/0.769/1.087 s). The repair changes the
+production mapping to `ppr:R:node --bind-to none` with `OMP_PROC_BIND=false`,
+adds a one-iteration preflight and a 180 s timeout per timed run, verifies
+ranks/threads/total_workers, and splits E0/E2/E5/E6-64/E6-128/E6-256/E7 into
+independent PBS jobs with `afterok` dependencies on E0.
+
+At 18:05-18:12 the PBS server port 15001 stopped answering. `qstat -B` and
+`qstat -u harry_chen` timed out, and two `qsub` processes for the hybrid
+diagnostic hung on the login node. Both hung qsub processes were killed before
+they could create duplicate jobs; no production job was submitted while PBS
+was unavailable. Submission of the redesigned campaign is retried only after
+`qstat` responds.
+
+The E0 gate must pass before any production job; the expected result files and
+row counts are listed in `docs/EXPERIMENTS.md` and
+`results/vanda_harry/expected_results.csv`.

@@ -41,8 +41,9 @@ struct Options {
     std::string centroid_path;    // where to write final centroids
     std::string init_centroid_path; // read fixed initial centroids instead of k-means++
     uint64_t weak_per_rank = 0;   // >0 enables deterministic weak-scaling generation
+    uint64_t resampled_total = 0; // >0 enables fixed-total deterministic resampling
     std::string source_bin;       // optional cached binary copy of the preprocessed source
-    std::string dump_generated;   // weak mode: write the generated local rows for verification
+    std::string dump_generated;   // generated mode: write the generated local rows for verification
 };
 
 inline void print_usage(const std::string& program) {
@@ -50,7 +51,8 @@ inline void print_usage(const std::string& program) {
         << "Usage: " << program << " DATA.csv [K=7] [MAX_ITER=100] [SEED=42]\n"
         << "         [--fixed-iterations] [--centroids FILE] [--rows N]\n"
         << "         [--init-centroids FILE] [--weak-per-rank R]\n"
-        << "         [--source-bin FILE] [--dump-generated FILE]\n";
+        << "         [--resampled-total N] [--source-bin FILE]\n"
+        << "         [--dump-generated FILE]\n";
 }
 
 inline Options parse_options(int argc, char** argv, const std::string& program) {
@@ -76,6 +78,8 @@ inline Options parse_options(int argc, char** argv, const std::string& program) 
             options.rows = std::stoull(argv[++i]);
         } else if (option == "--weak-per-rank" && i + 1 < argc) {
             options.weak_per_rank = std::stoull(argv[++i]);
+        } else if (option == "--resampled-total" && i + 1 < argc) {
+            options.resampled_total = std::stoull(argv[++i]);
         } else if (option == "--source-bin" && i + 1 < argc) {
             options.source_bin = argv[++i];
         } else if (option == "--dump-generated" && i + 1 < argc) {
@@ -91,7 +95,29 @@ inline Options parse_options(int argc, char** argv, const std::string& program) 
         throw std::runtime_error("--rows must be 0 (all) or at least 2");
     if (options.weak_per_rank == 1)
         throw std::runtime_error("--weak-per-rank must be 0 (off) or at least 2");
+    if (options.resampled_total == 1)
+        throw std::runtime_error("--resampled-total must be 0 (off) or at least 2");
+    if (options.weak_per_rank > 0 && options.resampled_total > 0)
+        throw std::runtime_error("--weak-per-rank and --resampled-total are mutually exclusive");
     return options;
+}
+
+// True when the logical dataset is produced by the deterministic SplitMix64
+// resampler instead of read row-for-row from DATA.csv. Fixed-total resampling
+// (--resampled-total N) gives the same N logical observations for every rank
+// count, which is what a strong-scaling experiment needs; --weak-per-rank R
+// gives R observations per rank so N grows with the rank count.
+inline bool generated_workload(const Options& options) {
+    return options.weak_per_rank > 0 || options.resampled_total > 0;
+}
+
+inline uint64_t generated_total(const Options& options, uint64_t ranks) {
+    if (options.weak_per_rank > 0) {
+        if (ranks != 0 && options.weak_per_rank > UINT64_MAX / ranks)
+            throw std::runtime_error("weak-scaling workload size overflows uint64");
+        return options.weak_per_rank * ranks;
+    }
+    return options.resampled_total;
 }
 
 // Systematic (evenly spaced) subsampling keeps class proportions of the
@@ -299,6 +325,8 @@ inline void materialise_indices(const std::vector<double>& source,
                                 uint64_t begin,
                                 uint64_t count,
                                 std::vector<double>& out) {
+    if (count > SIZE_MAX / size_t(D))
+        throw std::runtime_error("generated partition exceeds addressable memory");
     out.resize(size_t(count) * D);
     for (uint64_t i = 0; i < count; ++i) {
         const uint64_t src = weak_source_index(seed, begin + i, source_rows);

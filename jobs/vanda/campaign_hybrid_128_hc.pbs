@@ -1,0 +1,38 @@
+#!/bin/bash
+#PBS -N km-hc-hyb128
+#PBS -P personal-harry_chen
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:20:00
+#PBS -l select=2:ncpus=64:mpiprocs=64:ompthreads=1:mem=24gb
+#PBS -l place=scatter
+#PBS -q auto_free
+#
+# E4 Hybrid MPI+OpenMP at a SMALLER fixed 128-core budget (2 nodes x 64 cores),
+# on the same FIXED 10,000,000-observation resampled workload as the 256-core
+# job. This is deliberately submitted to the free route queue (auto_free ->
+# cpu_parallel, max 160 ncpus) so it does not compete for the scarce whole
+# batch_cpu nodes required by the 256-core campaigns.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common_harry.sh
+preflight
+require_binaries
+
+echo "== allocation =="
+sort "$PBS_NODEFILE" | uniq -c
+NNODES=$(sort -u "$PBS_NODEFILE" | wc -l)
+echo "distinct_nodes=$NNODES"
+
+rc=0
+OUT=$(job_results_path e4_hybrid_10m_128)
+echo "results_e4_10m_128=$OUT"
+python3 scripts/run_mpi.py --experiment hybrid \
+  --layouts 128x1,64x2,32x4,16x8,8x16,4x32 \
+  --resampled-total 10000000 \
+  --repetitions 3 --k 7 --max-iter 30 --nodes "$NNODES" --binding ppr \
+  --dataset-label covtype_resampled_10M_128core --results "$OUT"
+status=$?; echo "E4_10m_128_exit=$status"; [ $status -eq 0 ] || rc=1
+
+[ -f "$OUT" ] && echo "$(basename "$OUT") rows=$(($(wc -l < "$OUT") - 1))"
+echo "HYBRID_128_RC=$rc"
+exit "$rc"

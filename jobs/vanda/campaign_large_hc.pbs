@@ -1,0 +1,37 @@
+#!/bin/bash
+#PBS -N km-hc-10m
+#PBS -P personal-harry_chen
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:45:00
+#PBS -l select=8:ncpus=32:mpiprocs=32:ompthreads=1:mem=64gb
+#PBS -l place=scatter
+#PBS -q auto
+#
+# E3-large (8 nodes x 32 cores): MPI strong scaling on a FIXED 10,000,000-observation logical
+# workload generated deterministically from the preprocessed Covertype source.
+# --resampled-total makes N independent of the rank count, so 1 and 256 ranks
+# process exactly the same rows in the same order with the same initial
+# centroids. This is benchmark data, not 10M independent forest observations.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common_harry.sh
+preflight
+require_binaries
+
+echo "== allocation =="
+sort "$PBS_NODEFILE" | uniq -c
+
+rc=0
+OUT=$(job_results_path e2_large)
+echo "results_e2_large=$OUT"
+python3 scripts/run_mpi.py --experiment strong \
+  --ranks 1,2,4,8,16,32,64,128,256 \
+  --resampled-total 10000000 \
+  --repetitions 3 --k 7 --max-iter 30 --nodes 8 --binding core \
+  --dataset-label covtype_resampled_10M --results "$OUT"
+status=$?; echo "E2_large_exit=$status"; [ $status -eq 0 ] || rc=1
+
+echo "== row counts =="
+[ -f "$OUT" ] && echo "$(basename "$OUT") rows=$(($(wc -l < "$OUT") - 1))"
+echo "CAMPAIGN_LARGE_RC=$rc"
+exit "$rc"

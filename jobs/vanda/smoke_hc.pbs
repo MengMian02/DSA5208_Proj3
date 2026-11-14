@@ -1,0 +1,72 @@
+#!/bin/bash
+#PBS -N km-hc-smoke
+#PBS -P personal-harry_chen
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:30:00
+#PBS -l select=1:ncpus=12:mpiprocs=12:ompthreads=1:mem=40gb
+#PBS -q auto_free
+#
+# harry_chen correctness gate: build from the uploaded sources, then check
+# serial / OpenMP / MPI / hybrid agreement on
+#   (a) a 20k Covertype subset (existing smoke_test.py),
+#   (b) a fixed-total resampled workload (new --resampled-total mode),
+#   (c) deterministic weak scaling.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common_harry.sh
+preflight
+
+echo "== node =="
+hostname
+lscpu | egrep "Model name|Socket|Core\(s\) per socket|Thread\(s\) per core|CPU\(s\)|NUMA node"
+sort "$PBS_NODEFILE" | uniq -c
+
+# The probe job built stale sources; force a clean rebuild so every binary is
+# compiled from the sources uploaded with this experiment set.
+rm -f kmeans_serial kmeans_openmp kmeans_mpi kmeans_hybrid
+build_cpu_force
+rc=0
+
+echo "== existing smoke_test.py =="
+python3 scripts/smoke_test.py 2>&1 | tee "$LOGS_DIR/smoke_test_${PBS_JOBID}.log"
+[ "${PIPESTATUS[0]}" -eq 0 ] || rc=1
+
+echo "== fixed-total resampling cross-check (N=200003, K=7, I=8) =="
+ARGS="data/covtype.data 7 8 42 --fixed-iterations --resampled-total 200003"
+S_OUT=$(./kmeans_serial $ARGS)
+S_HASH=$(printf '%s\n' "$S_OUT" | sed -n 's/^label_hash=//p')
+S_INERTIA=$(printf '%s\n' "$S_OUT" | sed -n 's/.*inertia=\([0-9.]*\).*/\1/p' | head -1)
+S_ROWS=$(printf '%s\n' "$S_OUT" | sed -n 's/^rows=\([0-9]*\).*/\1/p')
+echo "serial rows=$S_ROWS hash=$S_HASH inertia=$S_INERTIA"
+
+check_hash() {
+  label="$1"; shift
+  out=$("$@" 2>&1); status=$?
+  hash=$(printf '%s\n' "$out" | sed -n 's/^label_hash=//p')
+  rows=$(printf '%s\n' "$out" | sed -n 's/^rows=\([0-9]*\).*/\1/p')
+  inertia=$(printf '%s\n' "$out" | sed -n 's/.*inertia=\([0-9.]*\).*/\1/p' | head -1)
+  if [ $status -ne 0 ]; then
+    echo "FAILED $label status=$status"; printf '%s\n' "$out" | tail -20; rc=1; return
+  fi
+  if [ "$rows" != "$S_ROWS" ] || [ "$hash" != "$S_HASH" ]; then
+    echo "MISMATCH $label rows=$rows hash=$hash (serial rows=$S_ROWS hash=$S_HASH)"; rc=1
+  else
+    echo "OK $label rows=$rows hash=$hash inertia=$inertia"
+  fi
+}
+
+check_hash "openmp 4t" env OMP_NUM_THREADS=4 ./kmeans_openmp $ARGS
+check_hash "mpi 1r"  mpirun -np 1 $MPI_FLAGS ./kmeans_mpi $ARGS
+check_hash "mpi 2r"  mpirun -np 2 $MPI_FLAGS ./kmeans_mpi $ARGS
+check_hash "mpi 4r"  mpirun -np 4 $MPI_FLAGS ./kmeans_mpi $ARGS
+check_hash "hybrid 2x2" env OMP_NUM_THREADS=2 mpirun -np 2 $MPI_FLAGS ./kmeans_hybrid $ARGS
+
+echo "== weak-scaling identity (1x20000 vs 4x5000) =="
+W1=$(mpirun -np 1 $MPI_FLAGS ./kmeans_mpi data/covtype.data 7 5 42 --fixed-iterations --weak-per-rank 20000 | sed -n 's/^label_hash=//p')
+W4=$(mpirun -np 4 $MPI_FLAGS ./kmeans_mpi data/covtype.data 7 5 42 --fixed-iterations --weak-per-rank 5000 | sed -n 's/^label_hash=//p')
+echo "weak 1x20000=$W1 4x5000=$W4"
+[ "$W1" = "$W4" ] || { echo "WEAK MISMATCH"; rc=1; }
+
+echo "SMOKE_RC=$rc"
+[ "$rc" -eq 0 ] && echo "SMOKE TEST PASSED" || echo "SMOKE TEST FAILED"
+exit "$rc"

@@ -110,7 +110,8 @@ def figure_e1(frames):
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
     ax = axes[0]
     plotted = False
-    for frame, label, colour in ((serial, "serial", "C0"), (openmp, "OpenMP", "C1")):
+    for frame, label, colour in ((serial, "serial, original", "C0"),
+                                 (openmp, "OpenMP, original", "C1")):
         if frame is None:
             continue
         part = frame[(frame["experiment"] == "E1-E1A") | (frame["experiment"] == "E1A")]
@@ -123,6 +124,17 @@ def figure_e1(frames):
         ax.annotate("%s fitted exponent %.2f" % (label, slope), xy=(0.97, 0.18),
                     xycoords="axes fraction", ha="right", color=colour)
         plotted = True
+    if serial is not None:
+        part = serial[(serial["experiment"] == "E1-E1C") | (serial["experiment"] == "E1C")]
+        if not part.empty:
+            summary = summarise(part, "rows", "fit_s")
+            ax.errorbar(summary["rows"], summary["median"], yerr=error_bars(summary),
+                        marker="D", capsize=3, color="C2", linestyle="--",
+                        label="serial, fixed-total resampled")
+            slope = np.polyfit(np.log(summary["rows"]), np.log(summary["median"]), 1)[0]
+            ax.annotate("resampled exponent %.2f" % slope, xy=(0.97, 0.08),
+                        xycoords="axes fraction", ha="right", color="C2")
+            plotted = True
     if plotted:
         rows = np.array([50_000, 581_012])
         # Reference slope of a perfectly linear (O(N)) fit, anchored at the
@@ -215,6 +227,54 @@ def figure_e2(frames):
     ax.set_ylabel("parallel efficiency (%)")
     ax.set_title("E2: strong-scaling efficiency")
     save(fig, "e2_strong_scaling.png")
+
+
+def figure_e2_large(frames):
+    """Strong scaling on the fixed 10M resampled workload, with the original
+    Covertype curve overlaid when both are present."""
+    large = frames.get("e2_strong_large")
+    original = frames.get("e2_strong")
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
+    if large is None or large.empty:
+        pending(axes[0], "E2-large: strong scaling (10M)")
+        pending(axes[1], "E2-large: efficiency (10M)")
+        save(fig, "e2_large_scaling.png")
+        return
+    series = [("original Covertype (N=581012)", original, "C0", "o"),
+              ("fixed-total resampled (N=10M)", large, "C3", "s")]
+    ax = axes[0]
+    for label, frame, colour, marker in series:
+        if frame is None or frame.empty:
+            continue
+        summary = summarise(frame, "ranks", "fit_s").sort_values("ranks")
+        ax.errorbar(summary["ranks"], summary["median"], yerr=error_bars(summary),
+                    marker=marker, capsize=3, color=colour, label=label)
+    ax.set_xscale("log", base=2)
+    ax.set_yscale("log", base=2)
+    ax.set_xlabel("MPI ranks")
+    ax.set_ylabel("fit time (s, median)")
+    ax.set_title("Strong scaling: original vs 10M resampled")
+    ax.legend(fontsize=7)
+
+    ax = axes[1]
+    for label, frame, colour, marker in series:
+        if frame is None or frame.empty:
+            continue
+        summary = summarise(frame, "ranks", "fit_s").sort_values("ranks")
+        t1 = float(summary["median"].iloc[0])
+        speedup = t1 / summary["median"]
+        ax.plot(summary["ranks"], speedup, marker=marker, color=colour, label=label)
+    ranks = np.array(sorted(set(np.concatenate([
+        frame["ranks"].unique() for frame in (original, large)
+        if frame is not None and not frame.empty]))))
+    ax.plot(ranks, ranks, "k--", lw=1, label="ideal")
+    ax.set_xscale("log", base=2)
+    ax.set_yscale("log", base=2)
+    ax.set_xlabel("MPI ranks")
+    ax.set_ylabel("speedup vs 1-rank MPI")
+    ax.set_title("Strong-scaling speedup")
+    ax.legend(fontsize=7)
+    save(fig, "e2_large_scaling.png")
 
 
 def figure_e5(frames):
@@ -435,6 +495,7 @@ def write_summary(frames, requested=None):
     spec = {
         "e1_serial": ("E1 serial", ["rows", "k"], ["fit_s", "load_s", "preprocess_s", "init_s", "total_s"]),
         "e2_strong": ("E2 MPI strong scaling", ["ranks"], ["fit_s", "local_compute_s", "mpi_reduction_s", "centroid_update_s", "fit_imbalance_s"]),
+        "e2_strong_large": ("E2-large MPI strong scaling (10M resampled)", ["ranks"], ["fit_s", "local_compute_s", "mpi_reduction_s", "distribution_s"]),
         "e3_weak": ("E3 MPI weak scaling", ["ranks", "rows"], ["fit_s", "local_compute_s", "mpi_reduction_s", "distribution_s"]),
         "e4_hybrid": ("E4 hybrid", ["ranks", "threads"], ["fit_s", "local_compute_s", "mpi_reduction_s", "thread_reduction_s"]),
         "e6_metal": ("E6 Metal", ["stage", "rows"], ["fit_s", "cpu_assign_s", "gpu_kernel_s", "accumulate_s", "label_agreement"]),
@@ -464,12 +525,14 @@ def write_summary(frames, requested=None):
 FIGURES_BY_EXPERIMENT = {
     "e1": (("e1_serial", "e1_openmp"), figure_e1),
     "e2": (("e2_strong",), figure_e2),
+    "e2large": (("e2_strong_large", "e2_strong"), figure_e2_large),
     "e3": (("e3_weak",), figure_e3),
     "e4": (("e4_hybrid",), figure_e4),
     "e5": (("e2_strong", "e4_hybrid"), figure_e5),
     "e6": (("e6_metal",), figure_e6),
 }
-ALL_SERIES = ("e1_serial", "e1_openmp", "e2_strong", "e3_weak", "e4_hybrid", "e6_metal")
+ALL_SERIES = ("e1_serial", "e1_openmp", "e2_strong", "e2_strong_large",
+              "e3_weak", "e4_hybrid", "e6_metal")
 
 
 def main():

@@ -1,0 +1,36 @@
+#!/bin/bash
+#PBS -N km-hc-diag2
+#PBS -P personal-harry_chen
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:20:00
+#PBS -l select=2:ncpus=4:mpiprocs=4:ompthreads=1:mem=8gb
+#PBS -l place=scatter
+#PBS -q auto_free
+#
+# Two-node MPI gate: prove that the allocation really spans two hosts, that
+# ranks are placed on both, and that the application result is unchanged.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common_harry.sh
+preflight
+require_binaries
+
+echo "== allocated chunks =="
+sort "$PBS_NODEFILE" | uniq -c
+echo "node_count=$(sort -u "$PBS_NODEFILE" | wc -l)"
+
+echo "== hostname across 4 ranks, forced 2 per node =="
+mpirun -np 4 --map-by ppr:2:node --bind-to core hostname 2>&1 | tee "$LOGS_DIR/diag2_hosts_${PBS_JOBID}.log"
+hosts=$(mpirun -np 4 --map-by ppr:2:node --bind-to core hostname 2>/dev/null | sort -u | wc -l)
+echo "distinct_rank_hosts=$hosts"
+
+echo "== application hash: local vs 4 ranks over 2 nodes =="
+ARGS="data/covtype.data 7 5 42 --fixed-iterations --rows 2000"
+LOCAL=$(./kmeans_mpi $ARGS | sed -n 's/^label_hash=//p')
+DIST=$(mpirun -np 4 --map-by ppr:2:node --bind-to core ./kmeans_mpi $ARGS | sed -n 's/^label_hash=//p')
+echo "local_hash=$LOCAL distributed_hash=$DIST"
+rc=0
+[ "$hosts" -eq 2 ] || { echo "ERROR: ranks did not span 2 hosts"; rc=1; }
+[ "$LOCAL" = "$DIST" ] || { echo "ERROR: distributed hash differs"; rc=1; }
+echo "DIAG_RC=$rc"
+exit "$rc"

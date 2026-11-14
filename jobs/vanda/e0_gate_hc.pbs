@@ -1,0 +1,112 @@
+#!/bin/bash
+#PBS -N km-hc-e0gate
+#PBS -P personal-harry_chen
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:25:00
+#PBS -l select=2:ncpus=8:mpiprocs=8:ompthreads=1:mem=16gb
+#PBS -l place=scatter
+#PBS -q auto_free
+#
+# E0 build and correctness gate. Nothing production is released unless this job
+# finishes with E0_RC=0. It rebuilds every CPU binary from the uploaded source,
+# records checksums, then validates:
+#   * serial / OpenMP / MPI / hybrid hashes on 20k Covertype,
+#   * the same four on a fixed-total resampled workload (N=200003),
+#   * weak-scaling identity 1x20000 == 4x5000,
+#   * two-node rank placement and several hybrid launch mappings.
+# Every mpirun is bounded by timeout so a launcher hang is recorded, not left to
+# consume the allocation.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common_harry.sh
+preflight
+
+echo "== allocation =="
+sort "$PBS_NODEFILE" | uniq -c
+nnodes=$(sort -u "$PBS_NODEFILE" | wc -l)
+echo "nnodes=$nnodes"
+
+build_cpu_force
+require_binaries
+
+rc=0
+export OMP_DYNAMIC=false
+unset OMP_PLACES
+unset OMP_PROC_BIND
+
+hash_of() { sed -n 's/^label_hash=//p'; }
+
+echo "== serial reference 20k =="
+S20=$(./kmeans_serial data/covtype.data 7 5 42 --fixed-iterations --rows 20000 | tee /tmp/e0_serial20.log | hash_of)
+echo "serial20_hash=$S20"
+[ -n "$S20" ] || { echo "ERROR: no serial hash"; rc=1; }
+
+echo "== OpenMP 4 threads 20k =="
+O20=$(OMP_NUM_THREADS=4 ./kmeans_openmp data/covtype.data 7 5 42 --fixed-iterations --rows 20000 | hash_of)
+echo "openmp20_hash=$O20"
+[ "$O20" = "$S20" ] || { echo "MISMATCH openmp"; rc=1; }
+
+echo "== MPI 2 and 4 ranks 20k =="
+for n in 2 4; do
+  H=$(timeout -k 5 90 mpirun $MPI_FLAGS -np $n ./kmeans_mpi data/covtype.data 7 5 42 --fixed-iterations --rows 20000 2>/dev/null | hash_of)
+  echo "mpi${n}_hash=$H"
+  [ "$H" = "$S20" ] || { echo "MISMATCH mpi $n"; rc=1; }
+done
+
+echo "== fixed-total resampled N=200003 K=7 I=5 =="
+RS=$(./kmeans_serial data/covtype.data 7 5 42 --fixed-iterations --resampled-total 200003 | tee /tmp/e0_serial_rs.log | hash_of)
+echo "serial_rs_hash=$RS"
+[ -n "$RS" ] || { echo "ERROR: no serial resampled hash"; rc=1; }
+RO=$(OMP_NUM_THREADS=4 ./kmeans_openmp data/covtype.data 7 5 42 --fixed-iterations --resampled-total 200003 | hash_of)
+echo "openmp_rs_hash=$RO"
+[ "$RO" = "$RS" ] || { echo "MISMATCH openmp resampled"; rc=1; }
+for n in 1 2 4; do
+  H=$(timeout -k 5 120 mpirun $MPI_FLAGS -np $n ./kmeans_mpi data/covtype.data 7 5 42 --fixed-iterations --resampled-total 200003 2>/dev/null | hash_of)
+  echo "mpi${n}_rs_hash=$H"
+  [ "$H" = "$RS" ] || { echo "MISMATCH mpi $n resampled"; rc=1; }
+done
+
+echo "== weak identity 1x20000 vs 4x5000 =="
+W1=$(timeout -k 5 90 mpirun $MPI_FLAGS -np 1 ./kmeans_mpi data/covtype.data 7 5 42 --fixed-iterations --weak-per-rank 20000 2>/dev/null | hash_of)
+W4=$(timeout -k 5 90 mpirun $MPI_FLAGS -np 4 ./kmeans_mpi data/covtype.data 7 5 42 --fixed-iterations --weak-per-rank 5000 2>/dev/null | hash_of)
+echo "weak_1x20000=$W1 weak_4x5000=$W4"
+[ "$W1" = "$W4" ] || { echo "MISMATCH weak identity"; rc=1; }
+
+echo "== two-node placement =="
+PLACE=$(timeout -k 5 60 mpirun --map-by ppr:2:node --bind-to none -np 4 hostname 2>/dev/null | sort -u)
+echo "hosts_seen=$(printf '%s\n' "$PLACE" | tr '\n' ' ')"
+PH=$(printf '%s\n' "$PLACE" | wc -l)
+echo "distinct_hosts=$PH"
+[ "$PH" -eq 2 ] || { echo "ERROR: ranks did not span 2 hosts"; rc=1; }
+
+echo "== hybrid launch variants (4 ranks x 2 threads, 2 nodes) =="
+export OMP_NUM_THREADS=2
+export OMP_PROC_BIND=false
+unset OMP_PLACES
+run_hybrid_variant() {
+  name="$1"; shift
+  echo "--- $name ---"
+  out=$(timeout -k 5 90 mpirun "$@" -np 4 ./kmeans_hybrid data/covtype.data 7 5 42 \
+        --fixed-iterations --rows 20000 2>&1); status=$?
+  hash=$(printf '%s\n' "$out" | hash_of)
+  workers=$(printf '%s\n' "$out" | tr ' ' '\n' | sed -n 's/^total_workers=//p' | head -1)
+  echo "status=$status hash=$hash workers=$workers"
+  if [ $status -eq 0 ] && [ "$hash" = "$S20" ] && [ "$workers" = "8" ]; then
+    echo "HYBRID_VARIANT_OK=$name"
+  fi
+  printf '%s\n' "$out" | grep -vE "mca_base|^\[" | tail -3
+}
+run_hybrid_variant ppr2_none --map-by ppr:2:node --bind-to none
+run_hybrid_variant none --bind-to none
+run_hybrid_variant core --map-by core --bind-to core
+run_hybrid_variant slot_none --map-by slot --bind-to none
+
+echo "== resampled hybrid ppr2-none =="
+RH=$(timeout -k 5 120 mpirun --map-by ppr:2:node --bind-to none -np 4 ./kmeans_hybrid \
+     data/covtype.data 7 5 42 --fixed-iterations --resampled-total 200003 2>/dev/null | hash_of)
+echo "hybrid_rs_hash=$RH expected_rs_hash=$RS"
+[ "$RH" = "$RS" ] || { echo "MISMATCH hybrid resampled"; rc=1; }
+
+echo "E0_RC=$rc"
+[ "$rc" -eq 0 ] && echo "E0 PASSED" || echo "E0 FAILED"
+exit "$rc"

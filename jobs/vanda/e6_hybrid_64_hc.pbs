@@ -1,0 +1,48 @@
+#!/bin/bash
+#PBS -N km-hc-e6-64
+#PBS -P personal-harry_chen
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:30:00
+#PBS -l select=1:ncpus=64:mpiprocs=64:ompthreads=1:mem=64gb
+#PBS -l place=scatter
+#PBS -q auto_free
+#
+# E6: Hybrid MPI+OpenMP at a fixed 64-core budget on the 10,000,000
+# resampled workload (K=7, D=54, I=30). Every layout has ranks x threads =
+# 64. The launch uses ppr:<ranks-per-node>:node with --bind-to none and
+# OMP_PROC_BIND=false; the pe= mapping forms hang under Vanda's PBS TM launch.
+# Each layout gets a one-iteration preflight and a hard timeout, so a bad layout
+# is recorded and skipped instead of consuming the whole allocation.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common_harry.sh
+preflight
+require_binaries
+
+echo "== allocation =="
+sort "$PBS_NODEFILE" | uniq -c
+nnodes=$(sort -u "$PBS_NODEFILE" | wc -l)
+echo "nnodes=$nnodes"
+[ "$nnodes" -eq 1 ] || { echo "ERROR: expected 1 nodes, got $nnodes" >&2; exit 4; }
+
+export OMP_DYNAMIC=false
+export OMP_PROC_BIND=false
+unset OMP_PLACES
+
+OUT=$(job_results_path e6_hybrid_64)
+echo "results=$OUT"
+python3 scripts/run_mpi.py --experiment hybrid \
+  --layouts 64x1,32x2,16x4,8x8,4x16,2x32,1x64 \
+  --resampled-total 10000000 --repetitions 3 --k 7 --max-iter 30 \
+  --nodes 1 --binding ppr-none --preflight-rows 20000 \
+  --preflight-timeout 90 --timeout 180 \
+  --dataset-label covtype_resampled_10M_64core --results "$OUT"
+status=$?
+rows=0; [ -f "$OUT" ] && rows=$(($(wc -l < "$OUT") - 1))
+expected=21
+echo "E6_64_exit=$status rows=$rows expected=$expected"
+if [ "$status" -ne 0 ] || [ "$rows" -ne "$expected" ]; then
+  echo "E6_64 INCOMPLETE (failed layouts are in results/failures.log)" >&2
+  exit 1
+fi
+echo "E6_64 COMPLETE"

@@ -1,0 +1,54 @@
+#!/bin/bash
+#PBS -N km-hc-hetero
+#PBS -P personal-harry_chen
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:25:00
+#PBS -l select=2:ncpus=72:mpiprocs=72+1:ncpus=8:mpiprocs=8+3:ncpus=24:mpiprocs=24+1:ncpus=16:mpiprocs=16+2:ncpus=8:mpiprocs=8
+#PBS -l place=scatter
+#PBS -q auto
+#
+# E2/E3 at exactly 256 cores on the node fragments that are actually free.
+# 2x72 + 8 + 3x24 + 16 + 2x8 = 256 cores over 9 nodes. This is a legitimate
+# 256-core MPI run, but the node sizes are heterogeneous, so it is reported
+# separately from the homogeneous 4x64 campaign. Every rank still owns
+# N/256 observations, so per-rank work is balanced; only node capacity differs.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common_harry.sh
+preflight
+require_binaries
+
+echo "== allocation =="
+sort "$PBS_NODEFILE" | uniq -c
+echo "distinct_nodes=$(sort -u "$PBS_NODEFILE" | wc -l)"
+
+echo "== rank placement =="
+for n in 2 64 256; do
+  echo "--- ranks=$n ---"
+  mpirun -np "$n" $MPI_FLAGS hostname 2>/dev/null | sort | uniq -c
+done
+
+rc=0
+OUT2=$(job_results_path e2_strong_256_hetero)
+OUT3=$(job_results_path e3_weak_256_hetero)
+echo "results_e2=$OUT2"
+echo "results_e3=$OUT3"
+echo "== E2 MPI strong scaling, 1..256 ranks, heterogeneous 256-core allocation =="
+python3 scripts/run_mpi.py --experiment strong \
+  --ranks 1,2,4,8,16,32,64,128,256 \
+  --repetitions 3 --k 7 --max-iter 30 --nodes 9 --binding core \
+  --dataset-label covtype_original_hetero256 --results "$OUT2"
+status=$?; echo "E2_exit=$status"; [ $status -eq 0 ] || rc=1
+
+echo "== E3 MPI weak scaling, 50000 observations/rank, up to 256 ranks =="
+python3 scripts/run_mpi.py --experiment weak \
+  --ranks 1,2,4,8,16,32,64,128,256 --per-rank 50000 \
+  --repetitions 3 --k 7 --max-iter 30 --nodes 9 --binding core \
+  --dataset-label covtype_weak_50k_hetero256 --results "$OUT3"
+status=$?; echo "E3_exit=$status"; [ $status -eq 0 ] || rc=1
+
+for f in "$OUT2" "$OUT3"; do
+  [ -f "$f" ] && echo "$(basename "$f") rows=$(($(wc -l < "$f") - 1))"
+done
+echo "HETERO_RC=$rc"
+exit "$rc"

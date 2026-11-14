@@ -1,0 +1,54 @@
+#!/bin/bash
+#PBS -N km-hc-hydiag
+#PBS -P personal-harry_chen
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:20:00
+#PBS -l select=2:ncpus=8:mpiprocs=8:ompthreads=1:mem=16gb
+#PBS -l place=scatter
+#PBS -q auto_free
+#
+# Find a multi-node hybrid launch that actually starts and binds correctly.
+# The 10M hybrid jobs hung with cput=00:00:00, and the previously "successful"
+# hybrid rows show 256x1 varying from 0.027 s to 1.09 s, so the launch mapping,
+# not the K-means kernel, is the suspect. Every variant is bounded by timeout.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common_harry.sh
+preflight
+require_binaries
+
+echo "== allocation =="
+sort "$PBS_NODEFILE" | uniq -c
+nnodes=$(sort -u "$PBS_NODEFILE" | wc -l)
+echo "nnodes=$nnodes"
+
+export OMP_PROC_BIND=false
+unset OMP_PLACES
+export OMP_DYNAMIC=false
+export OMP_NUM_THREADS=2
+ARGS="data/covtype.data 7 3 42 --fixed-iterations --rows 2000"
+REF=$(./kmeans_serial $ARGS | sed -n 's/^label_hash=//p')
+echo "serial_ref_hash=$REF"
+
+run_variant() {
+  name="$1"; shift
+  echo "===== $name ====="
+  echo "flags: $*"
+  echo "--- rank placement ---"
+  timeout -k 5 45 mpirun "$@" -np 4 hostname 2>&1 | grep -vE "mca_base|^\[" | sort | uniq -c
+  echo "placement_rc=${PIPESTATUS[0]}"
+  echo "--- hybrid ---"
+  out=$(timeout -k 5 60 mpirun "$@" -np 4 ./kmeans_hybrid $ARGS 2>&1); rc=$?
+  echo "hybrid_rc=$rc"
+  printf '%s\n' "$out" | grep -vE "mca_base|^\[" | tail -6
+  hash=$(printf '%s\n' "$out" | sed -n 's/^label_hash=//p')
+  workers=$(printf '%s\n' "$out" | tr ' ' '\n' | sed -n 's/^total_workers=//p' | head -1)
+  echo "hash=$hash workers=$workers match=$([ "$hash" = "$REF" ] && echo yes || echo no)"
+}
+
+run_variant "A ppr2 none" --map-by ppr:2:node --bind-to none
+run_variant "B ppr2 core" --map-by ppr:2:node --bind-to core
+run_variant "C nomap none" --bind-to none
+run_variant "D core core" --map-by core --bind-to core
+run_variant "E slot none" --map-by slot --bind-to none
+echo "DIAG_HYBRID_DONE"

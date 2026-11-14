@@ -82,12 +82,15 @@ rows carry the real flags.
         [--rows N]                  systematic subsample of N observations
         [--init-centroids FILE]     use fixed initial centroids instead of k-means++
         [--weak-per-rank R]         MPI only: deterministic weak-scaling workload
-        [--source-bin FILE]         MPI weak mode: cached binary source instead of a broadcast
+        [--resampled-total N]       fixed-size deterministic resampled workload
+        [--source-bin FILE]         generated mode: cached binary source instead of a broadcast
         [--dump-generated FILE]     MPI weak mode: write the generated rows (verification)
 
 kmeans_metal adds --mode assign|full, --bench-overhead and --validate.
 
     ./kmeans_serial data/covtype.data 7 30 42 --fixed-iterations --rows 100000
+    ./kmeans_serial data/covtype.data 7 30 42 --fixed-iterations --resampled-total 10000000
+    mpirun -np 256 ./kmeans_mpi data/covtype.data 7 30 42 --fixed-iterations --resampled-total 10000000
     OMP_NUM_THREADS=4 ./kmeans_openmp data/covtype.data 7 30 42 --fixed-iterations
     mpirun -np 4 ./kmeans_mpi data/covtype.data 7 30 42 --fixed-iterations
     OMP_NUM_THREADS=2 mpirun -np 4 ./kmeans_hybrid data/covtype.data 7 30 42 --fixed-iterations
@@ -97,6 +100,15 @@ kmeans_metal adds --mode assign|full, --bench-overhead and --validate.
 and every rank count sees the same subset in the same order. Preprocessing is
 then recomputed on that subset, which is the correct definition of K-means on a
 smaller dataset.
+
+--resampled-total N builds a fixed logical dataset of N observations by the
+same SplitMix64 mapping used for weak scaling. Unlike --weak-per-rank, N does
+not depend on the rank count: 1 rank and 256 ranks process exactly the same
+global rows in the same order, with the same initial centroids (k-means++ on
+the preprocessed Covertype source). It is the workload used for large
+strong-scaling runs. Each rank materialises only its own contiguous block, so
+the expanded matrix is never written to disk. The result is benchmark data
+built by resampling real Covertype rows; it is not 10M new forest observations.
 
 ## Deterministic weak-scaling generation (E3)
 
@@ -126,8 +138,8 @@ reported separately (source_bcast_s, load_s, generation_s).
 
 | Script | Experiment |
 |---|---|
-| scripts/run_e1.py | E1 serial scaling over N and K |
-| scripts/run_mpi.py --experiment strong | E2 strong scaling |
+| scripts/run_e1.py | E1 serial scaling over N, K and fixed-total resampled sizes |
+| scripts/run_mpi.py --experiment strong [--resampled-total N] | E2 strong scaling, original or fixed-size resampled |
 | scripts/run_mpi.py --experiment weak | E3 weak scaling |
 | scripts/run_mpi.py --experiment hybrid --layouts 72x1,36x2,... | E4 rank/thread layouts |
 | scripts/run_metal.py | E6 Metal |
@@ -141,6 +153,7 @@ runs are refused and logged to results/failures.log; an existing CSV is never
 truncated, and a schema mismatch aborts instead of mixing data.
 
     python3 scripts/run_e1.py --repetitions 3
+    python3 scripts/run_e1.py --grid none --resampled-totals 1000000,5000000,10000000
     python3 scripts/run_mpi.py --experiment strong --ranks 1,2,4,8 --repetitions 3
     python3 scripts/run_mpi.py --experiment weak   --ranks 1,2,4,8 --per-rank 50000 --repetitions 3
     python3 scripts/run_mpi.py --experiment hybrid --layouts 4x1,4x2,2x2,2x4,1x4 --repetitions 3
@@ -173,6 +186,9 @@ and the PBS job scripts are unaffected.
 * tests/run_weak_scaling_tests.py - the documented index mapping reproduced by
   an independent implementation, rank-count independence of the logical
   dataset, repeat determinism, cached-source equivalence.
+* jobs/vanda/smoke_hc.pbs - cluster-side gate: rebuild, then check serial,
+  OpenMP, MPI and hybrid label hashes on (a) a 20k Covertype subset and
+  (b) --resampled-total 200003, and check 1x20000 vs 4x5000 weak identity.
 * tests/run_metal_tests.py - Stage A/B agreement, GPU-vs-CPU label agreement and
   inertia tolerance, K = 1, convergence decision, determinism. Skips cleanly when
   Metal is unavailable.
@@ -184,9 +200,14 @@ failure until it is explained.
 
 ## HPC
 
-jobs/ holds Atlas (PBS Pro) and Vanda (SLURM) submission scripts, a required
-cluster.env filled from jobs/probe_cluster.sh, and the 256-core submission plan.
-Nothing there has been submitted; see jobs/README.md and docs/HPC_LOG.md.
+jobs/ holds Atlas (PBS Pro) and Vanda (PBS Pro) submission scripts plus
+harry_chen's dedicated Vanda set (jobs/vanda/*_hc.pbs,
+jobs/vanda/common_harry.sh, jobs/vanda/harry.env). The Vanda scripts use the
+verified route queues (`auto_free` for <=160 cores, `auto` for batch_cpu),
+`select=4:ncpus=64` for a 256-core job, `-l place=scatter` so chunks land on
+distinct nodes, and compute-node compilation. The teammate's
+`/scratch/e0550588` workspace is never used. See jobs/README.md and
+docs/HPC_LOG.md for the actual job record.
 
 ## Repository layout
 
