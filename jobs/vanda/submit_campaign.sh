@@ -11,7 +11,7 @@ mkdir -p "$LOG_DIR"
 STAMP=$(date +%Y%m%dT%H%M%S)
 RECORD="$LOG_DIR/submission_${STAMP}.log"
 
-if ! timeout 20 qstat -u harry_chen >/dev/null 2>&1; then
+if ! timeout -k 2 20 qstat -u harry_chen >/dev/null 2>&1; then
   echo "ERROR: PBS is not responding; refusing to submit." >&2
   echo "Retry when: qstat -u harry_chen" >&2
   exit 2

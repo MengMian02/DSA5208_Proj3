@@ -1,7 +1,7 @@
 # DSA5208 Project 3 — Report Draft (2026-11-14)
 
 Status: working draft. Every number is from a measured CSV/log listed in
-`docs/RESULT_VALIDATION.md`. Sections whose repaired campaign is still queued
+`docs/RESULT_VALIDATION.md`. Sections whose repaired campaign is not yet executed
 are marked **PENDING**; no value is invented.
 
 ## 1. Introduction
@@ -218,8 +218,9 @@ labelled hardware/placement-confounded.
 **CUDA (NVIDIA A40, 30 rows):** stage A re-uploads the matrix every iteration;
 stage B keeps it resident. Label agreement is 1.0 for 50k/100k/200k/581k and
 0.9999875 at 400k; max centroid difference 8.54e-5; max relative inertia
-difference 3.2e-8. At 581,012 the stage-B full fit is 0.644 s and the GPU
-kernel is ~0.016 s per assignment, against a CPU assignment pass of ~0.076 s.
+difference 3.2e-8. At 581,012 the stage-B full fit is 0.644 s, the CUDA
+kernel is ~0.00036 s per assignment (CUDA-event timing), and the CPU
+assignment pass is ~0.0895 s.
 Kernel-only time is never compared with CPU end-to-end time.
 
 ![CUDA](../figures/vanda_harry/analysis/e8_cuda.png)
@@ -248,8 +249,10 @@ Converged serial run: 46 iterations, inertia **3,722,934.178255**.
 Agreement with the seven known cover types is low: **ARI = 0.0191**,
 **NMI = 0.0562**, **AMI = 0.0562**. Every cluster is majority Lodgepole Pine
 (type 2, 48.7% of the data), and type 1 is split across all seven clusters.
-Some structure remains: cluster 4 is 45% type 4 and 27% type 6; cluster 6 is
-39% type 6 and 32% type 3; cluster 3 is mostly types 1/2 with a high mean road
+Some structure remains, but it is type-centric rather than cluster-centric:
+45% of all type-4 observations fall in cluster 4, and 32% of type-3
+observations fall in cluster 6. Those clusters are still majority types 1/2;
+cluster 3 contains only types 1, 2, 5 and 7, and has a high mean road
 distance.
 
 Interpretation: unweighted Euclidean K-means on 10 z-scored continuous
@@ -286,8 +289,9 @@ data are never used for it.
 * Resampled data repeat real source rows; their inertia is not a property of
   new forest observations.
 * CUDA/Metal use float32 kernels; comparisons are tolerance-based.
-* The E6/E2/E5/E7 repaired jobs were submitted after the audit; any section
-  still marked PENDING must remain incomplete in the final PDF.
+* The E6/E2/E5/E7 repaired jobs are gated on E0 and were not yet submitted
+  while the Vanda PBS server was unreachable; any section still marked
+  PENDING must remain incomplete in the final PDF.
 
 ## 17. AI-use declaration
 

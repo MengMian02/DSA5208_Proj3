@@ -23,7 +23,7 @@ section then hung and consumed the remaining walltime.
 
 ## 2. Repaired campaign (submission IDs to be filled after PBS recovers)
 
-At 18:05–18:20 the PBS server port 15001 was closed and `qstat` timed out. Two
+At 18:05–18:40 the PBS server port 15001 was closed and `qstat` timed out. Two
 hung `qsub` processes were killed; no duplicate job was created. The following
 jobs are prepared and will be submitted only when `qstat -u harry_chen` returns.
 

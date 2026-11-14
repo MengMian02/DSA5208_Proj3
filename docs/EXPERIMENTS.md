@@ -27,7 +27,7 @@ rows, not independent observations.
 
 | ID | Experiment | Configurations | Expected rows | Status | Output |
 |---|---|---|---:|---|---|
-| E0 | Build/correctness gate | serial/OpenMP/MPI/hybrid; 20k; 200003 resampled; 2-node placement; 4 hybrid mappings | pass/fail | **NOT_SUBMITTED** | `logs/e0_<jobid>.log`, `BUILD_INFO.*` |
+| E0 | Build/correctness gate | serial/OpenMP/MPI/hybrid; 20k; 200003 resampled; 2-node placement; 5 hybrid mappings (ppr/node/slot/none/core) | pass/fail | **NOT_SUBMITTED** | `logs/e0_<jobid>.log`, `BUILD_INFO.*` |
 | E1 | Serial N scaling | 50k/100k/200k/400k/581012 + 1M/5M/10M; K=7 (+K sweep) | 39 | **COMPLETE** | `results/vanda_harry/1552578..._e1_serial.csv` |
 | E2 | Original MPI strong | 1,2,4,8,16,32,64,128,256 ranks; 581012 | 27 | **NOT_SUBMITTED** (legacy hetero 27 rows COMPLETE_LEGACY) | `..._e2_strong.csv` |
 | E3 | Large MPI strong | same ranks; 10,000,000 resampled | 27 | **COMPLETE** | `..._e2_large.csv` (1552703) |

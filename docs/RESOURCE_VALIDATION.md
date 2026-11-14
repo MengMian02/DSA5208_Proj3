@@ -136,3 +136,20 @@ production job was submitted while the scheduler was unresponsive. Submission
 will be retried only when `qstat -u harry_chen` returns normally; the exact job
 IDs are recorded in `results/vanda_harry/SUBMISSION_MANIFEST.md` and
 `docs/HPC_LOG.md`.
+
+## 8. Requested core-hours (walltime cap)
+
+| Job | Cores | Walltime (h) | Core-hours |
+|---|---:|---:|---:|
+| E0 | 16 | 0.417 | 6.7 |
+| E2 | 256 | 0.417 | 106.7 |
+| E5 | 64 | 0.667 | 42.7 |
+| E6-64 | 64 | 0.667 | 42.7 |
+| E6-128 | 128 | 0.583 | 74.7 |
+| E6-256 | 256 | 0.750 | 192.0 |
+| E7 | 256 | 0.417 | 106.7 |
+| **total** | | | **572.2** |
+
+This is the worst case if every job runs to its walltime. Expected actual
+usage is much lower: the measured E2/E3 runs took 3–7 minutes and E6 is
+designed to finish in 8–15 minutes when the launcher works.

@@ -265,7 +265,7 @@ mpicxx  -fopenmp -fsyntax-only kmeans_hybrid.cpp     OK
 python3 -m py_compile scripts/*.py                   OK
 ```
 
-No binaries were produced on the login node. At 18:05-18:24 the PBS server
+No binaries were produced on the login node. At 18:05-18:40 the PBS server
 `stdct-mgmt-02:15001` was closed and `qstat` timed out; the two hung `qsub`
 processes were stopped. The E0/E2/E5/E6/E7 kit is prepared and uploaded, but
 no production job has been submitted while the scheduler is unreachable.

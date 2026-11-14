@@ -191,7 +191,7 @@ adds a one-iteration preflight and a 180 s timeout per timed run, verifies
 ranks/threads/total_workers, and splits E0/E2/E5/E6-64/E6-128/E6-256/E7 into
 independent PBS jobs with `afterok` dependencies on E0.
 
-At 18:05-18:12 the PBS server port 15001 stopped answering. `qstat -B` and
+At 18:05-18:40 the PBS server port 15001 stopped answering. `qstat -B` and
 `qstat -u harry_chen` timed out, and two `qsub` processes for the hybrid
 diagnostic hung on the login node. Both hung qsub processes were killed before
 they could create duplicate jobs; no production job was submitted while PBS
