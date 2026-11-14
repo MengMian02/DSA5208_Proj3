@@ -43,6 +43,11 @@ submit() {
 }
 
 e0=$(submit E0 jobs/vanda/e0_gate_hc.pbs) || exit 1
+if [ -z "$e0" ]; then
+  echo "ERROR: E0 is already in the queue; inspect 'qstat -u harry_chen'" >&2
+  echo "and submit the gated jobs manually with its job id." >&2
+  exit 4
+fi
 echo "E0 job id: $e0"
 submit E2 jobs/vanda/e2_strong_hc.pbs "$e0" >/dev/null || exit 1
 submit E5 jobs/vanda/e5_openmp_hc.pbs "$e0" >/dev/null || exit 1
