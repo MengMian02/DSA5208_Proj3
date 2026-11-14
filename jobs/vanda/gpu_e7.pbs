@@ -1,0 +1,42 @@
+#!/bin/bash
+#PBS -N km-e7-gpu
+#PBS -P personal-e0550588
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:40:00
+#PBS -l select=1:ncpus=8:ngpus=1:mem=64gb
+#PBS -q auto
+#
+# E7: CUDA assignment kernel on one NVIDIA A40, both stages, five problem sizes,
+# three repetitions. Builds on the compute node (Vanda policy) and validates
+# every run against a double-precision CPU reference in the same process.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common.sh
+preflight
+
+echo "== GPU =="
+nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv 2>&1 | tail -2
+
+echo "== toolchain =="
+module load cuda12.4/toolkit/12.4.1
+if ! command -v nvcc >/dev/null 2>&1; then
+  for d in /cm/shared/apps/cuda12.4 /cm/shared/apps/cuda-latest /cm/shared/apps/cuda12.2; do
+    if [ -x "$d/bin/nvcc" ]; then export PATH="$d/bin:$PATH"; export CUDA_HOME="$d"; break; fi
+  done
+fi
+echo "nvcc=$(command -v nvcc || echo MISSING)"
+
+echo "== build =="
+if [ ! -x kmeans_cuda ] || [ gpu/cuda/kmeans_cuda.cu -nt kmeans_cuda ]; then
+  nvcc -O3 -std=c++17 -arch=sm_86 -I. gpu/cuda/kmeans_cuda.cu -o kmeans_cuda 2>&1 | grep -vE "warning|note|\\^|~" | tail -10
+  echo "build_status=$?"
+fi
+ls -l kmeans_cuda || exit 1
+
+OUT=$(job_results_path e7_cuda)
+echo "results=$OUT"
+python3 scripts/run_cuda.py --rows 50000,100000,200000,400000,581012 \
+  --modes assign,full --repetitions "${REPS:-3}" --k 7 --max-iter 30 --results "$OUT"
+status=$?
+if [ -f "$OUT" ]; then echo "runner_exit=$status rows=$(($(wc -l < "$OUT") - 1))"; else echo "runner_exit=$status rows=NO_CSV"; fi
+exit $status

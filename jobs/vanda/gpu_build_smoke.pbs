@@ -1,0 +1,57 @@
+#!/bin/bash
+#PBS -N km-gpu-build
+#PBS -P personal-e0550588
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:20:00
+#PBS -l select=1:ncpus=8:ngpus=1:mem=64gb
+# Execution queues are from_route_only; auto_free routes to cpu_serial /
+# cpu_parallel / gpu, and requesting ngpus=1 is what makes it land on gpu.
+# Charged GPU route: auto -> batch_gpu. The free gpu queue (pool gpu_free, 9
+# nodes / 18 A40s) had every usable GPU allocated whenever it was sampled, so a
+# free-queue submission sits in "Placement set is too small". batch_gpu has 52
+# nodes; a few minutes on one A40 is a negligible slice of the 1000 GPU-hours.
+#PBS -q auto
+#
+# Toolchain gate for E7 (CUDA assignment kernel). It builds the kernel on a
+# compute node - Vanda policy - and then runs one small case so we learn both
+# that nvcc works and that the kernel agrees with the CPU reference, before
+# spending a longer GPU allocation. The gpu queue is charge rate 0 (pool
+# gpu_free), so this costs nothing but a few minutes of one A40.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common.sh
+preflight
+
+echo "== node =="; hostname
+echo "== visible GPUs =="; nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv 2>&1 | head -5
+
+echo "== toolchain =="
+# NOTE: never pipe "module load" - the pipeline runs it in a subshell and the
+# environment change is lost (this is what made nvcc "not found" the first time).
+module load cuda12.4/toolkit/12.4.1
+if ! command -v nvcc >/dev/null 2>&1; then
+  echo "module load did not provide nvcc; trying explicit paths"
+  for d in /cm/shared/apps/cuda12.4 /cm/shared/apps/cuda-latest /cm/shared/apps/cuda12.2; do
+    if [ -x "$d/bin/nvcc" ]; then export PATH="$d/bin:$PATH"; export CUDA_HOME="$d"; break; fi
+  done
+fi
+echo "nvcc=$(command -v nvcc || echo MISSING)"
+nvcc --version 2>&1 | tail -2
+
+echo "== compile =="
+nvcc -O3 -std=c++17 -arch=sm_86 -Xcompiler -Wall -I. gpu/cuda/kmeans_cuda.cu -o kmeans_cuda 2>&1 | tail -20
+rc=$?
+echo "nvcc_rc=$rc"
+if [ "$rc" -ne 0 ]; then echo "BUILD FAILED"; exit 1; fi
+ls -l kmeans_cuda
+
+echo "== small run: full vs assign mode =="
+for m in full assign; do
+  echo "--- mode=$m ---"
+  ./kmeans_cuda data/covtype.data 7 5 42 --fixed-iterations --rows 20000 --mode $m 2>&1 | egrep "implementation|label_agreement|cpu_assign_s|label_hash|iterations|fit_s" | head -4
+done
+
+echo "== agreement with the CPU serial program on the same subset =="
+SERIAL=$(./kmeans_serial data/covtype.data 7 5 42 --fixed-iterations --rows 20000 | sed -n 's/^label_hash=//p')
+echo "serial_hash=$SERIAL"
+echo "BUILD SMOKE DONE"
