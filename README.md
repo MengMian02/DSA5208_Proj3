@@ -183,6 +183,9 @@ and the PBS job scripts are unaffected.
   and on real Covertype: K = 1 and K = 7, fixed-iteration and convergence
   stopping, partitions that do not divide the row count, more ranks than
   observations, several thread counts, empty-cluster policy.
+* tests/run_resampled_tests.py - fixed-total resampling: serial/OpenMP/MPI
+  1/2/4/hybrid 2x2 agreement on N=100003, nondivisible partitions, exact hash
+  and tolerance-based inertia.
 * tests/run_weak_scaling_tests.py - the documented index mapping reproduced by
   an independent implementation, rank-count independence of the logical
   dataset, repeat determinism, cached-source equivalence.

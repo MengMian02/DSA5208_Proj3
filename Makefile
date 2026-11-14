@@ -50,6 +50,7 @@ kmeans_metal: gpu/metal/kmeans_metal.mm gpu/metal/kernels_source.h kmeans_common
 
 test: all
 	$(PYTHON) tests/run_tests.py
+	$(PYTHON) tests/run_resampled_tests.py
 	$(PYTHON) tests/run_weak_scaling_tests.py
 	-$(PYTHON) tests/run_metal_tests.py
 
