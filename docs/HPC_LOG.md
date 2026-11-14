@@ -135,3 +135,35 @@ Round 2 submissions (after cancelling 1546650/1547713/1547714/1547715):
 | 1551058 | E4 hybrid at 256 cores | batch_cpu / cpu_node | 4 x 64 cpus | 00:40 |
 | 1551059 | E4 hybrid in one node | cpu_parallel / cpu_free | 1 x 64 cpus | 01:30 |
 
+
+## 2026-11-14 - Vanda round 3: 256-core scaling obtained, E4-256 failed
+
+Scheduler outage: pbs_server on stdct-mgmt-02 was down for part of 13-14 Nov
+(host pingable, ports 15001-15003 refused). It recovered; queued jobs then ran.
+
+Completed and validated (all 27 rows = 9 rank counts x 3 reps, 30 fixed iters):
+| Job | Experiment | Nodes actually used | Result |
+|---|---|---|---|
+| 1551056 | E2 strong 4x64 | 4 x GN-A40-05x | 129.73x speedup at 256 ranks, 51% efficiency, ONE label hash across all rank counts |
+| 1551057 | E3 weak  4x64 | 4 nodes | weak efficiency 80.2% at 256 ranks |
+| 1551069 | E2 strong 8x32 | 8 x CN-0xx | 6.59x at 256 ranks, 3% efficiency |
+| 1551070 | E3 weak  8x32 | 8 nodes | weak efficiency 35.8% at 256 ranks |
+
+The two shapes are NOT a clean 4-vs-8 node comparison: the 4x64 job landed on
+GN-A40 nodes and the 8x32 job on CN nodes, so node family and interconnect are
+confounded with node count. The 8x32 slowdown is entirely collective time:
+at 128 ranks the Allreduce takes 0.399 s of a 0.426 s fit (94%), against a
+small collective share at 64 ranks. Report it as a topology observation, not
+as a scaling result.
+
+E4 at 256 cores (1551058 4x64, 1551071 8x32) produced NOTHING: cput stayed at
+00:00:00 for 28+ and 24+ minutes, zero repetitions, no CSV. Both select lines
+implied mpiprocs x ompthreads far above ncpus (64x64 = 4096 threads on a
+64-core chunk; 32x32 = 1024 on a 32-core chunk), unlike the E2/E3 jobs which
+used ompthreads=1 and ran normally. Scripts fixed (ompthreads=1) but NOT
+resubmitted, per instruction.
+
+Walltime extension on a running job is impossible here: qalter returns
+"Unauthorized Request". A longer walltime must therefore be chosen at
+submission time.
+

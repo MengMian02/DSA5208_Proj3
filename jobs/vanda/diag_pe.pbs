@@ -1,0 +1,30 @@
+#!/bin/bash
+#PBS -N km-diagpe
+#PBS -P personal-e0550588
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:15:00
+#PBS -l select=2:ncpus=8:mpiprocs=4:ompthreads=2:mem=16gb
+#PBS -l place=scatter
+#PBS -q auto_free
+#
+# The E4 hybrid needs T cores reserved per rank so an OpenMP team is not pinned
+# onto one core. "--map-by ppr:N:node:pe=T" hangs here and "--map-by core:pe=T"
+# is rejected, so this job tests the two remaining per-rank reservation forms
+# and shows the resulting placement.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common.sh
+preflight
+
+echo "== allocation =="; sort "$PBS_NODEFILE" | uniq -c
+place() {
+  name="$1"; shift
+  echo "--- $name ---"
+  timeout 90 "$@" 2>&1 | grep -vE "mca_base_component|^\[" | sort | uniq -c | head -6
+  echo "   rc=$?"
+}
+place "A slot:pe=2"      mpirun -np 8 --map-by slot:pe=2 --bind-to core hostname
+place "B node:pe=2"      mpirun -np 8 --map-by node:pe=2 --bind-to core hostname
+place "C slot bind-none" mpirun -np 8 --map-by slot --bind-to none hostname
+place "D core (control)" mpirun -np 8 --map-by core --bind-to core hostname
+echo "DIAG DONE"

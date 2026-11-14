@@ -3,8 +3,12 @@
 #PBS -P personal-e0550588
 #PBS -j oe
 #PBS -k oed
-#PBS -l walltime=00:40:00
-#PBS -l select=4:ncpus=64:mpiprocs=64:ompthreads=64:mem=100gb
+#PBS -l walltime=02:00:00
+#PBS -l select=4:ncpus=64:mpiprocs=64:ompthreads=1:mem=100gb
+# NB: ompthreads here describes the ALLOCATION (one thread per MPI process),
+# not the per-run OpenMP team. The runner sets OMP_NUM_THREADS per layout. An
+# earlier value of 64 implied 64 x 64 = 4096 threads on a 64-core chunk and the
+# job never completed a single repetition (1551058, 1551071).
 #PBS -l place=scatter
 #PBS -q auto
 #
@@ -20,9 +24,16 @@ build_cpu
 
 OUT=$(job_results_path e4_hybrid256)
 LAYOUTS="256x1,128x2,64x4,32x8,16x16,8x32,4x64"
+# No per-rank core reservation is possible on this cluster: every OpenMPI form
+# that takes pe= (ppr:N:node:pe=T, slot:pe=T, node:pe=T) hangs under the TM
+# launch here, and core:pe=T is rejected outright. Verified by km-diagmap and
+# km-diagpe on 2-node allocations. So: bind nothing, and let the OS spread the
+# 256 workers over the 256 cores this job owns exclusively.
+export OMP_PROC_BIND=false
+unset OMP_PLACES
 echo "results=$OUT layouts=${LAYOUTS:-$LAYOUTS}"
 python3 scripts/run_mpi.py --experiment hybrid --layouts "${LAYOUTS:-$LAYOUTS}" \
-  --repetitions "${REPS:-3}" --k 7 --max-iter 30 --nodes 4 --binding ppr \
+  --repetitions "${REPS:-3}" --k 7 --max-iter 30 --nodes 4 --binding none \
   --results "$OUT"
 status=$?
 if [ -f "$OUT" ]; then echo "runner_exit=$status rows=$(($(wc -l < "$OUT") - 1))"; else echo "runner_exit=$status rows=NO_CSV"; fi

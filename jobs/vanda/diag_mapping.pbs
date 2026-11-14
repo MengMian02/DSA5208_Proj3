@@ -1,0 +1,33 @@
+#!/bin/bash
+#PBS -N km-diagmap
+#PBS -P personal-e0550588
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:15:00
+#PBS -l select=2:ncpus=8:mpiprocs=8:ompthreads=1:mem=32gb
+#PBS -l place=scatter
+#PBS -q auto_free
+#
+# The 256-core E4 jobs wedge in mpirun (cput stays 00:00:00, app processes never
+# spawn) while E2/E3 at the same rank count run fine. The remaining difference is
+# the mapping flag: E2/E3 use "--map-by core", E4 uses "--map-by ppr:N:node:pe=T".
+# This job finds which mapping actually launches across nodes, with hostname as
+# the payload so the result is unambiguous.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common.sh
+preflight
+
+echo "== allocation =="; sort "$PBS_NODEFILE" | uniq -c
+try() {
+  name="$1"; shift
+  out=$(timeout 120 "$@" 2>&1); rc=$?
+  echo "--- $name rc=$rc ---"
+  printf '%s\n' "$out" | grep -vE "mca_base_component|^\[" | head -6
+}
+try "A map-by-core"        mpirun -np 16 --map-by core --bind-to core hostname
+try "B ppr16 pe1"          mpirun -np 16 --map-by ppr:16:node:pe=1 --bind-to core hostname
+try "C map-by core:pe2"    mpirun -np 16 --map-by core:pe=2 --bind-to core hostname
+try "D ppr8 pe2"           mpirun -np 16 --map-by ppr:8:node:pe=2 --bind-to core hostname
+try "E map-by slot"        mpirun -np 16 --map-by slot --bind-to core hostname
+try "F no mapping flags"   mpirun -np 16 hostname
+echo "DIAG DONE"
