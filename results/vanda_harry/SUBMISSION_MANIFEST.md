@@ -1,6 +1,6 @@
 # SUBMISSION_MANIFEST — Vanda account `harry_chen`
 
-Updated 2026-11-14 18:20 SGT. Workspace
+Updated 2026-11-15 13:08 SGT. Workspace
 `/scratch/harry_chen/DSA5208_Proj3`; project `personal-harry_chen`.
 `Q` = queued, `F` = finished, `—` = not submitted. A PBS job is never marked
 complete unless its CSV/log was inspected.
@@ -21,21 +21,24 @@ The 1552703 E3 rows are valid despite the job exit: the E2 section finished
 with 27/27 rows and all rank counts share hash `14076111245358280480`; the E4
 section then hung and consumed the remaining walltime.
 
-## 2. Repaired campaign (submission IDs to be filled after PBS recovers)
+## 2. Repaired campaign — submitted 2026-11-15 13:07-13:08 SGT
 
-At 18:05–18:40 the PBS server port 15001 was closed and `qstat` timed out. Two
-hung `qsub` processes were killed; no duplicate job was created. The following
-jobs are prepared and will be submitted only when `qstat -u harry_chen` returns.
+PBS recovered on 2026-11-15. `qstat -B` returned normally, `qstat -u
+harry_chen` was empty, and `qstat -x` showed no E0–E7 job from the failed
+attempt. E0 was submitted first; the other six jobs were then accepted with
+`-W depend=afterok:1557208`. All seven IDs were verified with `qstat -xf`.
+
+Snapshot at 13:08: E0 `R`, six dependents `H` (held by the `afterok` dependency).
 
 | ID | Experiment | PBS Job ID | Request | Dataset | Expected rows | Dependency | Status |
 |---|---|---|---|---|---:|---|---|
-| E0 | build + correctness gate | TBD | 2×8 cores, 25 min | 20k + 200003 | pass/fail | none | NOT_SUBMITTED |
-| E2 | original MPI strong | TBD | 4×64, 25 min | 581,012 | 27 | E0 | NOT_SUBMITTED |
-| E5 | OpenMP scaling | TBD | 1×64, 40 min | 581,012 + 10M | 21+21 | E0 | NOT_SUBMITTED |
-| E6-64 | hybrid | TBD | 1×64, 40 min | 10M | 21 | E0 | NOT_SUBMITTED |
-| E6-128 | hybrid | TBD | 2×64, 35 min | 10M | 18 | E0 | NOT_SUBMITTED |
-| E6-256 | hybrid | TBD | 4×64, 45 min | 10M | 21 | E0 | NOT_SUBMITTED |
-| E7 | node layout | TBD | 8×32, 25 min | 581,012 | 10 | E0 | NOT_SUBMITTED |
+| E0 | build + correctness gate | **1557208** | 2 nodes × 8 cores, 25 min, `auto_free` | 20k + 200003 | pass/fail | none | R |
+| E2 | original MPI strong | **1557218** | 4 × 64 cores, 25 min, `auto` | 581,012 | 27 | afterok:1557208 | H |
+| E5 | OpenMP scaling | **1557219** | 1 × 64 cores, 40 min, `auto_free` | 581,012 + 10M | 21+21 | afterok:1557208 | H |
+| E6-64 | hybrid | **1557220** | 1 × 64 cores, 40 min, `auto_free` | 10M | 21 | afterok:1557208 | H |
+| E6-128 | hybrid | **1557221** | 2 × 64 cores, 35 min, `auto_free` | 10M | 18 | afterok:1557208 | H |
+| E6-256 | hybrid | **1557222** | 4 × 64 cores, 45 min, `auto` | 10M | 21 | afterok:1557208 | H |
+| E7 | node layout | **1557223** | 8 × 32 cores, 25 min, `auto` | 581,012 | 10 | afterok:1557208 | H |
 
 E3 large and E4 weak are already complete from 1552703 and 1552672; no duplicate
 job is submitted for them. E1 and E9 are complete. E8 GPU results are preserved
@@ -51,8 +54,10 @@ with the full PBS job ID in the filename, e.g.
 ## 4. Rules enforced
 
 * Only `personal-harry_chen` and `/scratch/harry_chen` are used.
-* No job is submitted without E0 success (`afterok` dependency).
-* No `pe=` hybrid mapping; `ppr:R:node` + `--bind-to none` is tested first.
+* No production job is released without E0 success (`afterok` dependency).
+* E0 certifies the hybrid mapping in `HYBRID_LAUNCH`; E6 reads that file.
+* No `pe=` mapping is used; balanced `ppr`/`node`/`slot` mappings with
+  `--bind-to none` are tested first.
 * Every layout has a preflight and a hard timeout.
 * `BUILD_INFO.md5` must verify before production.
 * No result CSV is overwritten; every row carries the job ID.
