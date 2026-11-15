@@ -1,0 +1,45 @@
+#!/bin/bash
+#PBS -N km-allred
+#PBS -P personal-e0550588
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:20:00
+#PBS -l select=4:ncpus=64:mpiprocs=64:ompthreads=1:mem=64gb
+#PBS -l place=scatter
+#PBS -q auto
+#
+# Why is MPI_Allreduce 25 ms in the unpinned E4 runs but 0.32 ms in the pinned
+# E2 runs at the same 256 ranks and the same 4 nodes? This job sends the exact
+# K-means payload and varies only (a) core binding and (b) competing OpenMP
+# threads. Same allocation as E4-4x64, so the fabric is held constant.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common.sh
+preflight
+
+echo "== allocation =="; sort "$PBS_NODEFILE" | uniq -c
+echo "== fabric =="
+ip -o link show 2>/dev/null | head -8
+command -v ibstat >/dev/null 2>&1 && ibstat 2>/dev/null | egrep "Rate|State" | head -4
+echo "== cpu topology of this node =="
+lscpu | egrep "Model name|Socket|Core\(s\) per socket|Thread\(s\) per core|NUMA node\(s\)"
+
+echo "== build =="
+mpicxx -O3 -std=c++17 -fopenmp tests/allreduce_micro.cpp -o allreduce_micro 2>&1 | tail -5
+ls -l allreduce_micro || exit 1
+
+echo "== pinned (--map-by core --bind-to core), single-threaded ranks =="
+for np in 4 64 128 256; do
+  OMP_NUM_THREADS=1 mpirun -np $np --map-by core --bind-to core ./allreduce_micro 200 1
+done
+
+echo "== unpinned (--map-by core --bind-to none), single-threaded ranks =="
+for np in 4 64 128 256; do
+  OMP_NUM_THREADS=1 mpirun -np $np --map-by core --bind-to none ./allreduce_micro 200 1
+done
+
+echo "== unpinned with competing OpenMP threads (emulates the E4 layouts) =="
+for cfg in "4 64" "64 4" "256 1"; do
+  set -- $cfg
+  OMP_NUM_THREADS=$2 mpirun -np $1 --map-by core --bind-to none ./allreduce_micro 100 $2
+done
+echo "ALLREDUCE PROBE DONE"
