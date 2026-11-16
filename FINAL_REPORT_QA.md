@@ -69,5 +69,5 @@ Date: 2026-11-16. Final report baseline: GitHub `c450025` plus personal
 * Final submission ZIP (4.8 MB, 261 files) contains report, C++/CUDA source,
   PBS scripts, tests, README, results, logs, provenance and checklists.
 * ZIP extraction checked: 19-page `report_final/main.pdf`, no raw data, no
-  `.git`, no `.aux`/`.log`; Overleaf extraction recompiled to 19 pages with
+  `.git`, no LaTeX build `.aux`/`.log` files; relevant PBS/result logs are included; Overleaf extraction recompiled to 19 pages with
   0 undefined references and 0 overfull boxes.
