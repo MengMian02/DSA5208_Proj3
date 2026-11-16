@@ -245,3 +245,25 @@ one-iteration preflight plus a 180 s per-run timeout. The old `pe=T` mapping
 hangs under Vanda's OpenMPI 4.1.8 + PBS TM launch. `common_harry.sh` performs `make -B cpu`
 and writes `BUILD_INFO.md5`/`BUILD_INFO.txt`; every job verifies the checksums
 before running. `SOURCE_VERSION` records the branch/commit used for the build.
+
+## Personal HPC branch `repair-2026-11-14`
+
+This branch contains the independent Vanda HPC work in addition to the
+`origin/main` baseline: fixed-total resampling, E0-E9 scripts, the personal
+`results/vanda_harry/` measurements, downloaded PBS logs under
+`hpc_download/`, and `results/vanda_harry/DOWNLOAD_AUDIT.md`.
+
+To inspect it without touching `main`:
+
+```bash
+git fetch origin
+git switch --track origin/repair-2026-11-14
+```
+
+The branch was published as `origin/repair-2026-11-14`; `main` was not
+modified. The GitHub branch page is
+`https://github.com/MengMian02/DSA5208_Proj3/tree/repair-2026-11-14`.
+
+Status caveats: E2 (1557218) is partial because the 1-rank baseline timed out;
+E6-256 (1557222) is partial because 256x1 timed out; E6-128 (1557221) was still
+queued when downloaded. See `results/vanda_harry/DOWNLOAD_AUDIT.md`.
