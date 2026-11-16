@@ -66,7 +66,7 @@ Date: 2026-11-16. Final report baseline: GitHub `c450025` plus personal
 * Final Overleaf ZIP (863 KB, 38 files) compiled independently; contains
   19-page PDF, editable `main.tex`, references, 14 report figures, 16 tables
   and analysis scripts.
-* Final submission ZIP (4.8 MB, 256 files) contains report, C++/CUDA source,
+* Final submission ZIP (4.8 MB, 261 files) contains report, C++/CUDA source,
   PBS scripts, tests, README, results, logs, provenance and checklists.
 * ZIP extraction checked: 19-page `report_final/main.pdf`, no raw data, no
   `.git`, no `.aux`/`.log`; Overleaf extraction recompiled to 19 pages with
