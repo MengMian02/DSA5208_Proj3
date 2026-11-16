@@ -1,0 +1,18 @@
+\begin{tabular}{p{0.25\textwidth}p{0.47\textwidth}p{0.2\textwidth}}
+\toprule
+Source & Experiments used & Role \\
+\midrule
+GitHub \code{c450025} &
+E1 50k--581k, E2 4$\times$64 and 8$\times$32, E4 64-core, pinned 256$\times$1,
+CUDA A40, Metal, Covertype E9 &
+Primary baseline \\
+Personal \code{3ef17dc} &
+E1C 1M/5M/10M, E3 10M strong, E4 weak, E5 OpenMP 1--64,
+E6-64 10M, E6-256 partial, E7 8$\times$32 placement &
+Supplementary Vanda \\
+Recovery jobs &
+E2 1-rank 1563234 (complete; not merged), E6-256 256$\times$1 1563235,
+E6-128 backup 1563236/1563237 &
+Standalone E2 check; E6 pending \\
+\bottomrule
+\end{tabular}

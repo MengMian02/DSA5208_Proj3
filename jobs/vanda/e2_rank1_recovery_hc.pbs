@@ -1,0 +1,27 @@
+#!/bin/bash
+#PBS -N km-hc-e2r1
+#PBS -P personal-harry_chen
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:15:00
+#PBS -l select=1:ncpus=1:mpiprocs=1:ompthreads=1:mem=8gb
+#PBS -q auto_free
+#
+# R2: recover the missing E2 1-rank x 1-thread baseline. The failed original
+# ran the 1-rank case inside a four-node mixed CN/GN allocation and timed out
+# for 300 s before any application output. This recovery isolates the singleton
+# on one node and disables binding; the 2..256-rank data are already complete.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common_harry.sh
+preflight
+require_binaries
+OUT=$(job_results_path e2_rank1_recovery)
+echo "results=$OUT"
+python3 scripts/run_mpi.py --experiment strong --ranks 1 --repetitions 3 \
+  --k 7 --max-iter 30 --nodes 1 --binding none --timeout 120 \
+  --dataset-label covtype_original --results "$OUT"
+status=$?
+rows=0; [ -f "$OUT" ] && rows=$(($(wc -l < "$OUT") - 1))
+echo "E2_R1_exit=$status rows=$rows expected=3"
+[ "$status" -eq 0 ] && [ "$rows" -eq 3 ] || exit 1
+exit 0

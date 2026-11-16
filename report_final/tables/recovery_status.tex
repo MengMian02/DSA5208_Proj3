@@ -1,0 +1,10 @@
+\begin{tabular}{lllll}
+\toprule
+Experiment & Job & Resource & State & Dependency\\
+\midrule
+E2 1-rank recovery & 1563234 & 1 core & complete, exit 0 & none\\
+E6-256 256$\times$1 recovery & 1563235 & 4$\times$64 & queued & none\\
+E6-128 backup smoke & 1563236 & 2$\times$64 & queued & none\\
+E6-128 backup production & 1563237 & 2$\times$64 & held & afterok:1563236\\
+\bottomrule
+\end{tabular}

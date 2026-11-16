@@ -17,6 +17,7 @@ computed from `stime`/`mtime`; it is not the requested walltime.
 | E0 build/correctness | 1557208 | F | 0 | 00:25 | 00:01:14 | pass/fail | PASS | **COMPLETE** | `hpc_download/logs/km-hc-e0gate.o1557208`, `hpc_download/build/` |
 | E1 serial | 1552578 | F | 0 | 01:30 | 00:06:27 | 39 | 39 | **COMPLETE** | `results/vanda_harry/1552578..._e1_serial.csv` |
 | E2 strong | 1557218 | F | **1** | 00:25 | 00:07:09 | 27 | **24** | **PARTIAL** | `results/vanda_harry/1557218..._e2_strong.csv` |
+| E2 1-rank recovery | 1563234 | F | 0 | 00:15 | 00:00:20 | 3 | 3 | **COMPLETE, standalone** | `results/vanda_harry/1563234..._e2_rank1_recovery.csv` |
 | E3 large 10M | 1552703 | F | -29 | 00:30 | 30:29 job; E3 section ~6 min | 27 | 27 | **COMPLETE for E3** | `results/vanda_harry/1552703..._e2_large.csv` |
 | E4 weak | 1552672 | F | 0 | 00:25 | 00:03:24 | 27 | 27 | **COMPLETE** | `results/vanda_harry/1552672..._e3_weak_256_hetero.csv` |
 | E5 OpenMP original | 1557219 | F | 0 | 00:40 | 00:07:23 | 21 | 21 | **COMPLETE** | `results/vanda_harry/1557219..._e5_openmp_original.csv` |
@@ -28,6 +29,12 @@ computed from `stime`/`mtime`; it is not the requested walltime.
 | E9 Covertype | 1552669 | F | 0 | 00:30 | 00:00:08 | 1 run | 1 | **COMPLETE** | `covtype_converged_1552669.../` |
 
 ## Partial runs
+
+### E2 recovery 1563234 (complete, 3/3)
+The single-node `--binding none` recovery completed three rows on IN-010 with
+median 3.429 s and the same label hash. It is standalone evidence only: the
+node family differs from the original CN/GN allocation, so it is not inserted
+into the 4×64 speedup curve.
 
 ### E2 1557218 (exit 1, 24/27)
 `km-hc-e2strong.o1557218` records a 300 s timeout for the `ranks=1` run before

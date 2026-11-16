@@ -1,0 +1,24 @@
+experiment,source,commit,file,rows,status,used_in_report,report_section,notes
+E1 serial GitHub,GitHub,c450025,results/vanda/vanda_e1_serial_1546646.stdct-mgmt-02.csv,30,VALID,yes,6,50k-581k original
+E2 strong 4x64 GitHub,GitHub,c450025,results/vanda/vanda_e2_strong_1551056.stdct-mgmt-02.csv,27,VALID,yes,7,1-256 ranks
+E2 strong 8x32 GitHub,GitHub,c450025,results/vanda/vanda_e2_strong_8x32_1551069.stdct-mgmt-02.csv,27,VALID_WITH_LIMITATIONS,yes,7,hardware/placement confounded
+E3 weak 4x64 GitHub,GitHub,c450025,results/vanda/vanda_e3_weak_1551057.stdct-mgmt-02.csv,27,VALID,yes,8,50k per rank
+E3 weak 8x32 GitHub,GitHub,c450025,results/vanda/vanda_e3_weak_8x32_1551070.stdct-mgmt-02.csv,27,VALID_WITH_LIMITATIONS,yes,8,collective anomaly
+E4 64-core Hybrid GitHub,GitHub,c450025,results/vanda/vanda_e4_hybrid72_1551076.stdct-mgmt-02.csv,21,VALID,yes,10,581k one node
+Pinned 256x1 GitHub,GitHub,c450025,results/vanda/e4_pinned_4x64_1556850.csv,5,VALID,yes,10,5 reps
+CUDA A40 GitHub,GitHub,c450025,results/vanda/e7_cuda_1554475.csv,30,VALID_WITH_LIMITATIONS,yes,11,float32 device
+Metal Apple GitHub,GitHub,c450025,results/e6_metal.csv,30,VALID_WITH_LIMITATIONS,yes,11,separate platform
+Covertype E9 GitHub,GitHub,c450025,report/analysis/covtype_converged.log,1,VALID,yes,14,91 iterations
+E1 serial personal,Personal,3ef17dc,results/vanda_harry/1552578.stdct-mgmt-02_e1_serial.csv,39,VALID,yes,6,includes 1M/5M/10M
+E2 strong partial personal,Personal,3ef17dc,results/vanda_harry/1557218.stdct-mgmt-02_e2_strong.csv,24,PARTIAL,no,7,no 1-rank baseline
+E2 1-rank recovery,Personal,working,results/vanda_harry/1563234.stdct-mgmt-02_e2_rank1_recovery.csv,3,VALID_STANDALONE,yes,16,IN-010; not merged
+E3 10M personal,Personal,3ef17dc,results/vanda_harry/1552703.stdct-mgmt-02_e2_large.csv,27,VALID,yes,7,fixed-total 10M
+E4 weak personal,Personal,3ef17dc,results/vanda_harry/1552672.stdct-mgmt-02_e3_weak_256_hetero.csv,27,VALID,yes,8,50k per rank
+E5 OpenMP original,Personal,3ef17dc,results/vanda_harry/1557219.stdct-mgmt-02_e5_openmp_original.csv,21,VALID,yes,9,1-64 threads
+E5 OpenMP 10M,Personal,3ef17dc,results/vanda_harry/1557219.stdct-mgmt-02_e5_openmp_10m.csv,21,VALID,yes,9,1-64 threads
+E6-64 10M,Personal,3ef17dc,results/vanda_harry/1557220.stdct-mgmt-02_e6_hybrid_64.csv,21,VALID,yes,10,seven layouts
+E6-256 partial,Personal,3ef17dc,results/vanda_harry/1557222.stdct-mgmt-02_e6_hybrid_256.csv,18,PARTIAL,yes,10,no 256x1
+E7 8x32 placement,Personal,3ef17dc,results/vanda_harry/1557223.stdct-mgmt-02_e7_core.csv;results/vanda_harry/1557223.stdct-mgmt-02_e7_ppr32.csv;results/vanda_harry/1557223.stdct-mgmt-02_e7_ppr16.csv,10,VALID_WITH_LIMITATIONS,yes,12,placement logs partial
+E6-256 recovery,Personal,working,pending,0,PENDING,no,16,job 1563235
+E6-128 backup,Personal,working,pending,0,PENDING,no,16,jobs 1563236/1563237
+E6-128 original,Personal,working,pending,0,QUEUED,no,16,job 1557221 preserved

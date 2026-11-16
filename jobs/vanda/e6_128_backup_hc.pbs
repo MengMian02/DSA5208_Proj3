@@ -1,0 +1,32 @@
+#!/bin/bash
+#PBS -N km-hc-e6-128b
+#PBS -P personal-harry_chen
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:40:00
+#PBS -l select=2:ncpus=64:mpiprocs=64:ompthreads=1:mem=100gb
+#PBS -l place=scatter
+#PBS -q auto_free
+#
+# D1/D6: independent E6-128 backup. 10M fixed-total, K=7, D=54, seed=42,
+# I=30, 3 reps, six layouts = 128 workers. Uses the same 2x64 shape as the
+# smoke test; 128x1 is pinned, multi-thread layouts use ppr:R:node + no bind.
+# The original queued job 1557221 is deliberately not cancelled or modified.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common_harry.sh
+preflight
+require_binaries
+echo "== allocation =="; sort "$PBS_NODEFILE" | uniq -c
+OUT=$(job_results_path e6_128_backup)
+echo "results=$OUT"
+python3 scripts/run_mpi.py --experiment hybrid \
+  --layouts 128x1,64x2,32x4,16x8,8x16,4x32 \
+  --resampled-total 10000000 --repetitions 3 --k 7 --max-iter 30 \
+  --nodes 2 --binding hybrid-auto --preflight-rows 20000 \
+  --preflight-timeout 90 --timeout 180 \
+  --dataset-label covtype_resampled_10M_128backup --results "$OUT"
+status=$?
+rows=0; [ -f "$OUT" ] && rows=$(($(wc -l < "$OUT") - 1))
+echo "E6_128_backup_exit=$status rows=$rows expected=18"
+[ "$status" -eq 0 ] && [ "$rows" -eq 18 ] || exit 1
+exit 0

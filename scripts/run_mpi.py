@@ -98,6 +98,15 @@ def case_flags(args, case):
         nodes = max(1, args.nodes)
         per_node = max(1, (case["ranks"] + nodes - 1) // nodes)
         return ["--map-by", "ppr:%d:node" % per_node, "--bind-to", "none"]
+    if args.binding == "hybrid-auto":
+        # One thread per rank can be pinned; multi-thread teams cannot use
+        # pe=T on this launcher, so they keep the exclusive allocation and
+        # let the OS place the team.
+        if case["threads"] == 1:
+            return ["--map-by", "core", "--bind-to", "core"]
+        nodes = max(1, args.nodes)
+        per_node = max(1, (case["ranks"] + nodes - 1) // nodes)
+        return ["--map-by", "ppr:%d:node" % per_node, "--bind-to", "none"]
     if args.binding == "node-none":
         return ["--map-by", "node", "--bind-to", "none"]
     if args.binding == "slot-none":
@@ -192,7 +201,7 @@ def main():
     parser.add_argument("--nodes", type=int, default=1,
                         help="nodes the allocation spans (drives ppr binding)")
     parser.add_argument("--binding",
-                        choices=["core", "ppr", "ppr-none", "node-none",
+                        choices=["core", "ppr", "ppr-none", "hybrid-auto", "node-none",
                                  "slot-none", "none"], default="core",
                         help="core: env MPI_FLAGS; ppr-none: ppr:R:node + bind none "
                              "(validated hybrid path); node-none/slot-none: alternate "

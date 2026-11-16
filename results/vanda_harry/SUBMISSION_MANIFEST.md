@@ -30,7 +30,8 @@ outcomes are below; a PBS exit code is not treated as proof of complete output.
 | ID | Experiment | PBS Job ID | Request | Expected rows | Actual rows | Result | Status |
 |---|---|---|---|---:|---:|---|---|
 | E0 | build + correctness gate | **1557208** | 2×8 cores, 25 min, `auto_free` | pass/fail | PASS | all hashes match; `HYBRID_MODE=ppr-none`; build checksums written | **COMPLETE** |
-| E2 | original MPI strong | **1557218** | 4×64, 25 min, `auto` | 27 | **24** | 1-rank ×3 timed out at 300 s; ranks 2–256 complete, one hash | **PARTIAL** |
+| E2 | original MPI strong | **1557218** | 4×64, 25 min, `auto` | 27 | **24** | ranks 2–256 complete, one hash; 1-rank timed out | **PARTIAL** |
+| E2-R1 | 1-rank recovery | **1563234** | 1 core, 15 min, `auto_free` | 3 | **3** | median 3.429 s; same hash; IN-010, not merged due node family | **COMPLETE, standalone** |
 | E5 | OpenMP scaling | **1557219** | 1×64, 40 min, `auto_free` | 21+21 | **42** | original and 10M complete | **COMPLETE** |
 | E6-64 | Hybrid | **1557220** | 1×64, 40 min, `auto_free` | 21 | **21** | seven layouts complete | **COMPLETE** |
 | E6-128 | Hybrid | **1557221** | 2×64, 35 min, `auto_free` | 18 | **0** | still queued: insufficient node_pool | **QUEUED** |
