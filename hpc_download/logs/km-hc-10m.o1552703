@@ -1,0 +1,43 @@
+job=1552703.stdct-mgmt-02 host=GN-A40-055 date=2026-11-14T12:29:20+08:00
+workdir=/scratch/harry_chen/DSA5208_Proj3 results=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry logs=/scratch/harry_chen/DSA5208_Proj3/logs
+nodes=gn-a40-055.stdct.loc gn-a40-056.stdct.loc gn-a40-057.stdct.loc gn-a40-062.stdct.loc 
+ncpus_requested=unset
+mpicxx=/cm/shared/apps/openmpi4/gcc/4.1.8/bin/mpicxx g++ (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5)
+python3=/bin/python3 Python 3.9.18
+== allocation ==
+     64 gn-a40-055.stdct.loc
+     64 gn-a40-056.stdct.loc
+     64 gn-a40-057.stdct.loc
+     64 gn-a40-062.stdct.loc
+results_e2_large=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry/1552703.stdct-mgmt-02_e2_large.csv
+E2 ranks=1 threads=1 rep=1/3: fit_s=49.8049 local=49.8048 coll=0.0000 obs/rank=10000000
+E2 ranks=1 threads=1 rep=2/3: fit_s=49.8412 local=49.8410 coll=0.0001 obs/rank=10000000
+E2 ranks=1 threads=1 rep=3/3: fit_s=49.7513 local=49.7512 coll=0.0001 obs/rank=10000000
+E2 ranks=2 threads=1 rep=1/3: fit_s=24.9207 local=24.8023 coll=0.2851 obs/rank=5000000
+E2 ranks=2 threads=1 rep=2/3: fit_s=24.8438 local=24.8113 coll=0.2386 obs/rank=5000000
+E2 ranks=2 threads=1 rep=3/3: fit_s=24.8786 local=24.8662 coll=0.3795 obs/rank=5000000
+E2 ranks=4 threads=1 rep=1/3: fit_s=12.6994 local=12.5675 coll=0.4565 obs/rank=2500000
+E2 ranks=4 threads=1 rep=2/3: fit_s=12.4445 local=12.4412 coll=0.1942 obs/rank=2500000
+E2 ranks=4 threads=1 rep=3/3: fit_s=12.4779 local=12.4532 coll=0.2270 obs/rank=2500000
+E2 ranks=8 threads=1 rep=1/3: fit_s=6.3965 local=6.3066 coll=0.2642 obs/rank=1250000
+E2 ranks=8 threads=1 rep=2/3: fit_s=6.2867 local=6.2678 coll=0.1555 obs/rank=1250000
+E2 ranks=8 threads=1 rep=3/3: fit_s=6.2230 local=6.2097 coll=0.0935 obs/rank=1250000
+E2 ranks=16 threads=1 rep=1/3: fit_s=3.3057 local=3.2898 coll=0.2289 obs/rank=625000
+E2 ranks=16 threads=1 rep=2/3: fit_s=3.1544 local=3.1356 coll=0.0783 obs/rank=625000
+E2 ranks=16 threads=1 rep=3/3: fit_s=3.1324 local=3.1129 coll=0.0593 obs/rank=625000
+E2 ranks=32 threads=1 rep=1/3: fit_s=2.1907 local=2.1435 coll=0.4340 obs/rank=312500
+E2 ranks=32 threads=1 rep=2/3: fit_s=1.8124 local=1.7858 coll=0.0568 obs/rank=312500
+E2 ranks=32 threads=1 rep=3/3: fit_s=1.8092 local=1.7837 coll=0.0535 obs/rank=312500
+E2 ranks=64 threads=1 rep=1/3: fit_s=1.2784 local=1.2421 coll=0.3939 obs/rank=156250
+E2 ranks=64 threads=1 rep=2/3: fit_s=1.1581 local=1.1303 coll=0.3270 obs/rank=156250
+E2 ranks=64 threads=1 rep=3/3: fit_s=0.9302 local=0.8958 coll=0.0828 obs/rank=156250
+E2 ranks=128 threads=1 rep=1/3: fit_s=0.6923 local=0.6225 coll=0.2606 obs/rank=78125
+E2 ranks=128 threads=1 rep=2/3: fit_s=0.7039 local=0.6259 coll=0.2669 obs/rank=78125
+E2 ranks=128 threads=1 rep=3/3: fit_s=0.6734 local=0.6176 coll=0.2424 obs/rank=78125
+E2 ranks=256 threads=1 rep=1/3: fit_s=0.4009 local=0.3134 coll=0.1945 obs/rank=39062
+E2 ranks=256 threads=1 rep=2/3: fit_s=0.3744 local=0.3121 coll=0.1638 obs/rank=39062
+E2 ranks=256 threads=1 rep=3/3: fit_s=0.3691 local=0.3114 coll=0.1514 obs/rank=39062
+E2_large_exit=0
+results_e4_10m=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry/1552703.stdct-mgmt-02_e4_hybrid_10m.csv
+== E4 Hybrid MPI+OpenMP on the 10M resampled workload, 256 cores ==
+=>> PBS: job killed: walltime 1821 exceeded limit 1800

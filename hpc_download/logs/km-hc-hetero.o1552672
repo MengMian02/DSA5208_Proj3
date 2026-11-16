@@ -1,0 +1,87 @@
+job=1552672.stdct-mgmt-02 host=CN-077 date=2026-11-14T12:28:46+08:00
+workdir=/scratch/harry_chen/DSA5208_Proj3 results=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry logs=/scratch/harry_chen/DSA5208_Proj3/logs
+nodes=cn-077.stdct.loc cn-078.stdct.loc cn-083.stdct.loc cn-086.stdct.loc cn-087.stdct.loc 
+ncpus_requested=unset
+mpicxx=/cm/shared/apps/openmpi4/gcc/4.1.8/bin/mpicxx g++ (GCC) 11.4.1 20231218 (Red Hat 11.4.1-3)
+python3=/bin/python3 Python 3.9.18
+== allocation ==
+     72 cn-077.stdct.loc
+     72 cn-078.stdct.loc
+     32 cn-083.stdct.loc
+     56 cn-086.stdct.loc
+     24 cn-087.stdct.loc
+distinct_nodes=5
+== rank placement ==
+--- ranks=2 ---
+      2 CN-077
+--- ranks=64 ---
+     64 CN-077
+--- ranks=256 ---
+     72 CN-077
+     72 CN-078
+     32 CN-083
+     56 CN-086
+     24 CN-087
+results_e2=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry/1552672.stdct-mgmt-02_e2_strong_256_hetero.csv
+results_e3=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry/1552672.stdct-mgmt-02_e3_weak_256_hetero.csv
+== E2 MPI strong scaling, 1..256 ranks, heterogeneous 256-core allocation ==
+E2 ranks=1 threads=1 rep=1/3: fit_s=3.6072 local=3.6070 coll=0.0001 obs/rank=581012
+E2 ranks=1 threads=1 rep=2/3: fit_s=2.8801 local=2.8800 coll=0.0001 obs/rank=581012
+E2 ranks=1 threads=1 rep=3/3: fit_s=2.8843 local=2.8843 coll=0.0000 obs/rank=581012
+E2 ranks=2 threads=1 rep=1/3: fit_s=1.6761 local=1.6714 coll=0.2350 obs/rank=290506
+E2 ranks=2 threads=1 rep=2/3: fit_s=1.4432 local=1.4407 coll=0.0070 obs/rank=290506
+E2 ranks=2 threads=1 rep=3/3: fit_s=1.4440 local=1.4410 coll=0.0060 obs/rank=290506
+E2 ranks=4 threads=1 rep=1/3: fit_s=0.9199 local=0.9145 coll=0.2001 obs/rank=145253
+E2 ranks=4 threads=1 rep=2/3: fit_s=0.7257 local=0.7226 coll=0.0068 obs/rank=145253
+E2 ranks=4 threads=1 rep=3/3: fit_s=0.7237 local=0.7210 coll=0.0058 obs/rank=145253
+E2 ranks=8 threads=1 rep=1/3: fit_s=0.5603 local=0.5566 coll=0.1993 obs/rank=72626
+E2 ranks=8 threads=1 rep=2/3: fit_s=0.3651 local=0.3620 coll=0.0051 obs/rank=72626
+E2 ranks=8 threads=1 rep=3/3: fit_s=0.3658 local=0.3622 coll=0.0062 obs/rank=72626
+E2 ranks=16 threads=1 rep=1/3: fit_s=0.2888 local=0.2862 coll=0.1081 obs/rank=36313
+E2 ranks=16 threads=1 rep=2/3: fit_s=0.2890 local=0.2873 coll=0.1086 obs/rank=36313
+E2 ranks=16 threads=1 rep=3/3: fit_s=0.2883 local=0.2862 coll=0.1082 obs/rank=36313
+E2 ranks=32 threads=1 rep=1/3: fit_s=0.1468 local=0.1443 coll=0.0431 obs/rank=18156
+E2 ranks=32 threads=1 rep=2/3: fit_s=0.1473 local=0.1445 coll=0.0437 obs/rank=18156
+E2 ranks=32 threads=1 rep=3/3: fit_s=0.1459 local=0.1435 coll=0.0429 obs/rank=18156
+E2 ranks=64 threads=1 rep=1/3: fit_s=0.0762 local=0.0737 coll=0.0244 obs/rank=9078
+E2 ranks=64 threads=1 rep=2/3: fit_s=0.0755 local=0.0734 coll=0.0237 obs/rank=9078
+E2 ranks=64 threads=1 rep=3/3: fit_s=0.0753 local=0.0725 coll=0.0234 obs/rank=9078
+E2 ranks=128 threads=1 rep=1/3: fit_s=0.0456 local=0.0369 coll=0.0201 obs/rank=4539
+E2 ranks=128 threads=1 rep=2/3: fit_s=0.0526 local=0.0367 coll=0.0273 obs/rank=4539
+E2 ranks=128 threads=1 rep=3/3: fit_s=0.0492 local=0.0369 coll=0.0237 obs/rank=4539
+E2 ranks=256 threads=1 rep=1/3: fit_s=0.0241 local=0.0183 coll=0.0123 obs/rank=2269
+E2 ranks=256 threads=1 rep=2/3: fit_s=0.0245 local=0.0182 coll=0.0127 obs/rank=2269
+E2 ranks=256 threads=1 rep=3/3: fit_s=0.0257 local=0.0131 coll=0.0139 obs/rank=2269
+E2_exit=0
+== E3 MPI weak scaling, 50000 observations/rank, up to 256 ranks ==
+E3 ranks=1 threads=1 rep=1/3: fit_s=0.2452 local=0.2452 coll=0.0000 obs/rank=50000
+E3 ranks=1 threads=1 rep=2/3: fit_s=0.2484 local=0.2484 coll=0.0000 obs/rank=50000
+E3 ranks=1 threads=1 rep=3/3: fit_s=0.2459 local=0.2459 coll=0.0000 obs/rank=50000
+E3 ranks=2 threads=1 rep=1/3: fit_s=0.3888 local=0.3884 coll=0.1435 obs/rank=50000
+E3 ranks=2 threads=1 rep=2/3: fit_s=0.3883 local=0.3879 coll=0.1425 obs/rank=50000
+E3 ranks=2 threads=1 rep=3/3: fit_s=0.3897 local=0.3894 coll=0.1402 obs/rank=50000
+E3 ranks=4 threads=1 rep=1/3: fit_s=0.3922 local=0.3900 coll=0.1445 obs/rank=50000
+E3 ranks=4 threads=1 rep=2/3: fit_s=0.3936 local=0.3892 coll=0.1465 obs/rank=50000
+E3 ranks=4 threads=1 rep=3/3: fit_s=0.3939 local=0.3902 coll=0.1493 obs/rank=50000
+E3 ranks=8 threads=1 rep=1/3: fit_s=0.3951 local=0.3914 coll=0.1492 obs/rank=50000
+E3 ranks=8 threads=1 rep=2/3: fit_s=0.3942 local=0.3906 coll=0.1487 obs/rank=50000
+E3 ranks=8 threads=1 rep=3/3: fit_s=0.3944 local=0.3907 coll=0.1489 obs/rank=50000
+E3 ranks=16 threads=1 rep=1/3: fit_s=0.3939 local=0.3909 coll=0.1483 obs/rank=50000
+E3 ranks=16 threads=1 rep=2/3: fit_s=0.3954 local=0.3911 coll=0.1494 obs/rank=50000
+E3 ranks=16 threads=1 rep=3/3: fit_s=0.3983 local=0.3899 coll=0.1504 obs/rank=50000
+E3 ranks=32 threads=1 rep=1/3: fit_s=0.4151 local=0.3934 coll=0.1339 obs/rank=50000
+E3 ranks=32 threads=1 rep=2/3: fit_s=0.4092 local=0.3911 coll=0.1280 obs/rank=50000
+E3 ranks=32 threads=1 rep=3/3: fit_s=0.4095 local=0.3923 coll=0.1284 obs/rank=50000
+E3 ranks=64 threads=1 rep=1/3: fit_s=0.4163 local=0.3957 coll=0.1332 obs/rank=50000
+E3 ranks=64 threads=1 rep=2/3: fit_s=0.4171 local=0.3947 coll=0.1539 obs/rank=50000
+E3 ranks=64 threads=1 rep=3/3: fit_s=0.4150 local=0.3938 coll=0.1409 obs/rank=50000
+E3 ranks=128 threads=1 rep=1/3: fit_s=0.4440 local=0.3943 coll=0.1629 obs/rank=50000
+E3 ranks=128 threads=1 rep=2/3: fit_s=0.4416 local=0.3960 coll=0.1605 obs/rank=50000
+E3 ranks=128 threads=1 rep=3/3: fit_s=0.4456 local=0.3959 coll=0.1644 obs/rank=50000
+E3 ranks=256 threads=1 rep=1/3: fit_s=0.4440 local=0.3945 coll=0.1706 obs/rank=50000
+E3 ranks=256 threads=1 rep=2/3: fit_s=0.4393 local=0.3946 coll=0.1586 obs/rank=50000
+E3 ranks=256 threads=1 rep=3/3: fit_s=0.4587 local=0.3939 coll=0.1794 obs/rank=50000
+E3_exit=0
+1552672.stdct-mgmt-02_e2_strong_256_hetero.csv rows=27
+1552672.stdct-mgmt-02_e3_weak_256_hetero.csv rows=27
+HETERO_RC=0

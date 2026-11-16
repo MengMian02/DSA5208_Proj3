@@ -1,0 +1,89 @@
+job=1557208.stdct-mgmt-02 host=IN-001 date=2026-11-15T13:07:19+08:00
+workdir=/scratch/harry_chen/DSA5208_Proj3 results=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry logs=/scratch/harry_chen/DSA5208_Proj3/logs
+nodes=in-001.stdct.loc in-002.stdct.loc 
+ncpus_requested=unset
+mpicxx=/cm/shared/apps/openmpi4/gcc/4.1.8/bin/mpicxx g++ (GCC) 11.4.1 20231218 (Red Hat 11.4.1-3)
+python3=/bin/python3 Python 3.9.18
+== allocation ==
+      8 in-001.stdct.loc
+      8 in-002.stdct.loc
+nnodes=2
+== forced rebuild on IN-001 ==
+g++ -O3 -std=c++17 -DNDEBUG -Wall -Wextra -Wpedantic kmeans_serial.cpp -o kmeans_serial
+g++ -O3 -std=c++17 -DNDEBUG -Wall -Wextra -Wpedantic -fopenmp kmeans_openmp.cpp  -o kmeans_openmp
+mpicxx -O3 -std=c++17 -DNDEBUG -Wall -Wextra -Wpedantic kmeans_mpi.cpp -o kmeans_mpi
+mpicxx -O3 -std=c++17 -DNDEBUG -Wall -Wextra -Wpedantic -fopenmp kmeans_hybrid.cpp  -o kmeans_hybrid
+build_time=2026-11-15T13:07:27+08:00
+build_host=IN-001
+source_version=branch=repair-2026-11-14;commit=425c420;base_commit=f70e611;date=2026-11-14T10:20:24Z;features=serial,openmp,mpi,hybrid,fixed-total-resampling,weak-scaling,cuda-metal-preserved;notes=hybrid ppr-none launch, bounded timeouts, build checksums;
+gcc=gcc (GCC) 11.4.1 20231218 (Red Hat 11.4.1-3)
+mpicxx=g++ (GCC) 11.4.1 20231218 (Red Hat 11.4.1-3)
+make_flags=BASE_FLAGS ?= -O3 -std=c++17 -DNDEBUG
+binaries:
+5fb9af7bdcf92de55078dc053009f956  kmeans_serial
+44f873ae61b6f262e7568c767eab8ed1  kmeans_openmp
+9ca3cdba4f9b5bc5d7e8470085a93783  kmeans_mpi
+4d3d58d9e494528e87b08ddef9f73dc9  kmeans_hybrid
+== serial reference 20k ==
+serial20_hash=5226889865157587927
+== OpenMP 4 threads 20k ==
+openmp20_hash=5226889865157587927
+== MPI 2 and 4 ranks 20k ==
+mpi2_hash=5226889865157587927
+mpi4_hash=5226889865157587927
+== fixed-total resampled N=200003 K=7 I=5 ==
+serial_rs_hash=6135603609609552067
+openmp_rs_hash=6135603609609552067
+mpi1_rs_hash=6135603609609552067
+mpi2_rs_hash=6135603609609552067
+mpi4_rs_hash=6135603609609552067
+== weak identity 1x20000 vs 4x5000 ==
+weak_1x20000=4563062909436114682 weak_4x5000=4563062909436114682
+== two-node placement ==
+hosts_seen=IN-001 IN-002 
+distinct_hosts=2
+== hybrid launch variants (4 ranks x 2 threads, 2 nodes) ==
+--- ppr2_none ---
+placement_hosts=2
+      2 IN-001
+      2 IN-002
+status=0 hash=5226889865157587927 workers=8
+HYBRID_VARIANT_OK=ppr2_none
+label_hash=5226889865157587927
+csv_header=implementation,ranks,threads,total_workers,rows,features,k,max_iter,iterations,fit_s,sse,converged,stopping_mode,distribution_s,mpi_reduction_s,local_compute_s,thread_reduction_s,centroid_update_s,fit_min_s,fit_imbalance_s,obs_per_rank,weak
+csv=hybrid,4,2,8,20000,54,7,5,5,0.007109,128186.401927,false,fixed_iterations,0.924238,0.004514,0.006713,0.000005,0.000002,0.007085,0.000024,5000,0
+--- node_none ---
+placement_hosts=2
+      2 IN-001
+      2 IN-002
+status=0 hash=5226889865157587927 workers=8
+HYBRID_VARIANT_OK=node_none
+label_hash=5226889865157587927
+csv_header=implementation,ranks,threads,total_workers,rows,features,k,max_iter,iterations,fit_s,sse,converged,stopping_mode,distribution_s,mpi_reduction_s,local_compute_s,thread_reduction_s,centroid_update_s,fit_min_s,fit_imbalance_s,obs_per_rank,weak
+csv=hybrid,4,2,8,20000,54,7,5,5,0.003872,128186.401927,false,fixed_iterations,0.930943,0.001227,0.003394,0.000004,0.000003,0.003735,0.000137,5000,0
+--- slot_none ---
+placement_hosts=1
+      4 IN-001
+status=0 hash=5226889865157587927 workers=8
+label_hash=5226889865157587927
+csv_header=implementation,ranks,threads,total_workers,rows,features,k,max_iter,iterations,fit_s,sse,converged,stopping_mode,distribution_s,mpi_reduction_s,local_compute_s,thread_reduction_s,centroid_update_s,fit_min_s,fit_imbalance_s,obs_per_rank,weak
+csv=hybrid,4,2,8,20000,54,7,5,5,0.007544,128186.401927,false,fixed_iterations,0.905984,0.001518,0.006981,0.000005,0.000002,0.007537,0.000007,5000,0
+--- none ---
+placement_hosts=1
+      4 IN-001
+status=0 hash=5226889865157587927 workers=8
+label_hash=5226889865157587927
+csv_header=implementation,ranks,threads,total_workers,rows,features,k,max_iter,iterations,fit_s,sse,converged,stopping_mode,distribution_s,mpi_reduction_s,local_compute_s,thread_reduction_s,centroid_update_s,fit_min_s,fit_imbalance_s,obs_per_rank,weak
+csv=hybrid,4,2,8,20000,54,7,5,5,0.006600,128186.401927,false,fixed_iterations,0.905720,0.003197,0.006489,0.000005,0.000002,0.006592,0.000008,5000,0
+--- core ---
+placement_hosts=1
+      4 IN-001
+status=0 hash=5226889865157587927 workers=8
+label_hash=5226889865157587927
+csv_header=implementation,ranks,threads,total_workers,rows,features,k,max_iter,iterations,fit_s,sse,converged,stopping_mode,distribution_s,mpi_reduction_s,local_compute_s,thread_reduction_s,centroid_update_s,fit_min_s,fit_imbalance_s,obs_per_rank,weak
+csv=hybrid,4,2,8,20000,54,7,5,5,0.006635,128186.401927,false,fixed_iterations,0.906487,0.000185,0.006490,0.000003,0.000003,0.006620,0.000015,5000,0
+HYBRID_MODE=ppr-none
+== resampled hybrid with selected mapping ==
+hybrid_rs_hash=6135603609609552067 expected_rs_hash=6135603609609552067
+E0_RC=0
+E0 PASSED

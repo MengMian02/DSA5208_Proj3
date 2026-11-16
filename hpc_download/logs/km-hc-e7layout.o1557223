@@ -1,0 +1,47 @@
+job=1557223.stdct-mgmt-02 host=CN-010 date=2026-11-15T16:25:33+08:00
+workdir=/scratch/harry_chen/DSA5208_Proj3 results=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry logs=/scratch/harry_chen/DSA5208_Proj3/logs
+nodes=cn-010.stdct.loc cn-011.stdct.loc cn-089.stdct.loc cn-092.stdct.loc cn-094.stdct.loc cn-119.stdct.loc cn-122.stdct.loc cn-123.stdct.loc 
+ncpus_requested=unset
+mpicxx=/cm/shared/apps/openmpi4/gcc/4.1.8/bin/mpicxx g++ (GCC) 11.4.1 20231218 (Red Hat 11.4.1-3)
+python3=/bin/python3 Python 3.9.18
+== allocation ==
+     32 cn-010.stdct.loc
+     32 cn-011.stdct.loc
+     32 cn-089.stdct.loc
+     32 cn-092.stdct.loc
+     32 cn-094.stdct.loc
+     32 cn-119.stdct.loc
+     32 cn-122.stdct.loc
+     32 cn-123.stdct.loc
+nnodes=8
+===== core ranks=128,256 flags=--map-by core --bind-to core =====
+--- placement ---
+results=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry/1557223.stdct-mgmt-02_e7_core.csv
+E2 ranks=128 threads=1 rep=1/2: fit_s=0.1571 local=0.0493 coll=0.1319 obs/rank=4539
+E2 ranks=128 threads=1 rep=2/2: fit_s=0.1447 local=0.0366 coll=0.1195 obs/rank=4539
+E2 ranks=256 threads=1 rep=1/2: fit_s=0.5313 local=0.0181 coll=0.5187 obs/rank=2269
+E2 ranks=256 threads=1 rep=2/2: fit_s=0.5211 local=0.0182 coll=0.5084 obs/rank=2269
+core exit=0 rows=4
+===== ppr32 ranks=128,256 flags=--map-by ppr:32:node --bind-to core =====
+--- placement ---
+results=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry/1557223.stdct-mgmt-02_e7_ppr32.csv
+E2 ranks=128 threads=1 rep=1/2: fit_s=0.1230 local=0.0813 coll=0.0978 obs/rank=4539
+E2 ranks=128 threads=1 rep=2/2: fit_s=0.2138 local=0.0392 coll=0.1885 obs/rank=4539
+E2 ranks=256 threads=1 rep=1/2: fit_s=0.4639 local=0.0184 coll=0.4504 obs/rank=2269
+E2 ranks=256 threads=1 rep=2/2: fit_s=0.4960 local=0.0180 coll=0.4831 obs/rank=2269
+ppr32 exit=0 rows=4
+===== ppr16 ranks=128 flags=--map-by ppr:16:node --bind-to core =====
+--- placement ---
+     16 CN-010
+     16 CN-011
+     16 CN-089
+     16 CN-092
+     16 CN-094
+     16 CN-119
+     16 CN-122
+     16 CN-123
+results=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry/1557223.stdct-mgmt-02_e7_ppr16.csv
+E2 ranks=128 threads=1 rep=1/2: fit_s=0.2748 local=0.0416 coll=0.2498 obs/rank=4539
+E2 ranks=128 threads=1 rep=2/2: fit_s=0.3899 local=0.0354 coll=0.3643 obs/rank=4539
+ppr16 exit=0 rows=2
+E7_RC=0

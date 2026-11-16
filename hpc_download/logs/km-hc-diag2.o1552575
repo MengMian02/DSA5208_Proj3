@@ -1,0 +1,24 @@
+job=1552575.stdct-mgmt-02 host=IN-002 date=2026-11-13T18:31:34+08:00
+workdir=/scratch/harry_chen/DSA5208_Proj3 results=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry logs=/scratch/harry_chen/DSA5208_Proj3/logs
+nodes=in-002.stdct.loc in-004.stdct.loc 
+ncpus_requested=unset
+mpicxx=/cm/shared/apps/openmpi4/gcc/4.1.8/bin/mpicxx g++ (GCC) 11.4.1 20231218 (Red Hat 11.4.1-3)
+python3=/bin/python3 Python 3.9.18
+== allocated chunks ==
+      4 in-002.stdct.loc
+      4 in-004.stdct.loc
+node_count=2
+== hostname across 4 ranks, forced 2 per node ==
+IN-002
+IN-002
+IN-004
+IN-004
+distinct_rank_hosts=2
+== application hash: local vs 4 ranks over 2 nodes ==
+[IN-002:3653294] mca_base_component_repository_open: unable to open mca_osc_ucx: libucp.so.0: cannot open shared object file: No such file or directory (ignored)
+[IN-002:3653624] mca_base_component_repository_open: unable to open mca_osc_ucx: libucp.so.0: cannot open shared object file: No such file or directory (ignored)
+[IN-002:3653623] mca_base_component_repository_open: unable to open mca_osc_ucx: libucp.so.0: cannot open shared object file: No such file or directory (ignored)
+[IN-004:1670048] mca_base_component_repository_open: unable to open mca_osc_ucx: libucp.so.0: cannot open shared object file: No such file or directory (ignored)
+[IN-004:1670049] mca_base_component_repository_open: unable to open mca_osc_ucx: libucp.so.0: cannot open shared object file: No such file or directory (ignored)
+local_hash=16916848538625945915 distributed_hash=16916848538625945915
+DIAG_RC=0

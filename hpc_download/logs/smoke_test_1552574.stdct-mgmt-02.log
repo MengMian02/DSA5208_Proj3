@@ -1,0 +1,8 @@
+serial reference ...
+  rows=20000 iterations=10 inertia=127674.143194 hash=13331398156540273710
+  openmp 1x2     hash=13331398156540273710 OK
+  mpi 2x1        hash=13331398156540273710 OK
+  hybrid 2x2     hash=13331398156540273710 OK
+  weak 2 ranks   rows=10000 weak=1 obs/rank=5000
+  (kmeans_metal not built or not macOS: GPU check skipped)
+PASS: smoke test

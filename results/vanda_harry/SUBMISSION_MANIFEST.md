@@ -1,6 +1,6 @@
 # SUBMISSION_MANIFEST — Vanda account `harry_chen`
 
-Updated 2026-11-15 13:08 SGT. Workspace
+Updated 2026-11-16 13:20 SGT (downloaded outcomes). Workspace
 `/scratch/harry_chen/DSA5208_Proj3`; project `personal-harry_chen`.
 `Q` = queued, `F` = finished, `—` = not submitted. A PBS job is never marked
 complete unless its CSV/log was inspected.
@@ -21,28 +21,26 @@ The 1552703 E3 rows are valid despite the job exit: the E2 section finished
 with 27/27 rows and all rank counts share hash `14076111245358280480`; the E4
 section then hung and consumed the remaining walltime.
 
-## 2. Repaired campaign — submitted 2026-11-15 13:07-13:08 SGT
+## 2. Repaired campaign — submitted 2026-11-15, completed/queried 2026-11-16
 
-PBS recovered on 2026-11-15. `qstat -B` returned normally, `qstat -u
-harry_chen` was empty, and `qstat -x` showed no E0–E7 job from the failed
-attempt. E0 was submitted first; the other six jobs were then accepted with
-`-W depend=afterok:1557208`. All seven IDs were verified with `qstat -xf`.
+PBS recovered 2026-11-15. E0 was submitted first; the other six jobs were
+accepted with `-W depend=afterok:1557208`. All IDs were verified. Actual
+outcomes are below; a PBS exit code is not treated as proof of complete output.
 
-Snapshot at 13:08: E0 `R`, six dependents `H` (held by the `afterok` dependency).
+| ID | Experiment | PBS Job ID | Request | Expected rows | Actual rows | Result | Status |
+|---|---|---|---|---:|---:|---|---|
+| E0 | build + correctness gate | **1557208** | 2×8 cores, 25 min, `auto_free` | pass/fail | PASS | all hashes match; `HYBRID_MODE=ppr-none`; build checksums written | **COMPLETE** |
+| E2 | original MPI strong | **1557218** | 4×64, 25 min, `auto` | 27 | **24** | 1-rank ×3 timed out at 300 s; ranks 2–256 complete, one hash | **PARTIAL** |
+| E5 | OpenMP scaling | **1557219** | 1×64, 40 min, `auto_free` | 21+21 | **42** | original and 10M complete | **COMPLETE** |
+| E6-64 | Hybrid | **1557220** | 1×64, 40 min, `auto_free` | 21 | **21** | seven layouts complete | **COMPLETE** |
+| E6-128 | Hybrid | **1557221** | 2×64, 35 min, `auto_free` | 18 | **0** | still queued: insufficient node_pool | **QUEUED** |
+| E6-256 | Hybrid | **1557222** | 4×64, 45 min, `auto` | 21 | **18** | 256×1 preflight timed out; six other layouts complete | **PARTIAL** |
+| E7 | node layout | **1557223** | 8×32, 25 min, `auto` | 10 | **10** | core/ppr32/ppr16 CSVs complete | **COMPLETE** |
 
-| ID | Experiment | PBS Job ID | Request | Dataset | Expected rows | Dependency | Status |
-|---|---|---|---|---|---:|---|---|
-| E0 | build + correctness gate | **1557208** | 2 nodes × 8 cores, 25 min, `auto_free` | 20k + 200003 | pass/fail | none | R |
-| E2 | original MPI strong | **1557218** | 4 × 64 cores, 25 min, `auto` | 581,012 | 27 | afterok:1557208 | H |
-| E5 | OpenMP scaling | **1557219** | 1 × 64 cores, 40 min, `auto_free` | 581,012 + 10M | 21+21 | afterok:1557208 | H |
-| E6-64 | hybrid | **1557220** | 1 × 64 cores, 40 min, `auto_free` | 10M | 21 | afterok:1557208 | H |
-| E6-128 | hybrid | **1557221** | 2 × 64 cores, 35 min, `auto_free` | 10M | 18 | afterok:1557208 | H |
-| E6-256 | hybrid | **1557222** | 4 × 64 cores, 45 min, `auto` | 10M | 21 | afterok:1557208 | H |
-| E7 | node layout | **1557223** | 8 × 32 cores, 25 min, `auto` | 581,012 | 10 | afterok:1557208 | H |
-
-E3 large and E4 weak are already complete from 1552703 and 1552672; no duplicate
-job is submitted for them. E1 and E9 are complete. E8 GPU results are preserved
-(CUDA 30 rows, Metal 30 rows); no new GPU job is submitted.
+E1 (39 rows), E3 large (27), E4 weak (27) and E9 (converged run) are complete
+from the earlier jobs. E8 CUDA (30) and Metal (30) are preserved. See
+`DOWNLOAD_AUDIT.md` for failure details and checksums; logs are under
+`hpc_download/logs/`.
 
 ## 3. Output paths
 

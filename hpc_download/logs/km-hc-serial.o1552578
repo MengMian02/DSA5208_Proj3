@@ -1,0 +1,49 @@
+job=1552578.stdct-mgmt-02 host=IN-001 date=2026-11-13T18:33:37+08:00
+workdir=/scratch/harry_chen/DSA5208_Proj3 results=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry logs=/scratch/harry_chen/DSA5208_Proj3/logs
+nodes=in-001.stdct.loc 
+ncpus_requested=unset
+mpicxx=/cm/shared/apps/openmpi4/gcc/4.1.8/bin/mpicxx g++ (GCC) 11.4.1 20231218 (Red Hat 11.4.1-3)
+python3=/bin/python3 Python 3.9.18
+results_e1=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry/1552578.stdct-mgmt-02_e1_serial.csv
+E1A rows=50000 k=7 rep=1/3: fit_s=0.3894 total_s=1.3623
+E1A rows=50000 k=7 rep=2/3: fit_s=0.3889 total_s=1.3182
+E1A rows=50000 k=7 rep=3/3: fit_s=0.2698 total_s=0.9686
+E1A rows=100000 k=7 rep=1/3: fit_s=0.5474 total_s=1.2378
+E1A rows=100000 k=7 rep=2/3: fit_s=0.5406 total_s=1.2314
+E1A rows=100000 k=7 rep=3/3: fit_s=0.5460 total_s=1.2344
+E1A rows=200000 k=7 rep=1/3: fit_s=1.0838 total_s=1.8343
+E1A rows=200000 k=7 rep=2/3: fit_s=1.0832 total_s=1.8320
+E1A rows=200000 k=7 rep=3/3: fit_s=1.0832 total_s=1.8342
+E1A rows=400000 k=7 rep=1/3: fit_s=2.1692 total_s=3.0377
+E1A rows=400000 k=7 rep=2/3: fit_s=2.1862 total_s=3.0552
+E1A rows=400000 k=7 rep=3/3: fit_s=2.1839 total_s=3.0566
+E1A rows=581012 k=7 rep=1/3: fit_s=3.1824 total_s=4.1316
+E1A rows=581012 k=7 rep=2/3: fit_s=3.1541 total_s=4.1036
+E1A rows=581012 k=7 rep=3/3: fit_s=3.1530 total_s=4.1020
+E1B rows=581012 k=2 rep=1/3: fit_s=1.2919 total_s=2.0640
+E1B rows=581012 k=2 rep=2/3: fit_s=1.3013 total_s=2.0968
+E1B rows=581012 k=2 rep=3/3: fit_s=1.3113 total_s=2.1044
+E1B rows=581012 k=4 rep=1/3: fit_s=2.0184 total_s=2.8881
+E1B rows=581012 k=4 rep=2/3: fit_s=2.0258 total_s=2.8755
+E1B rows=581012 k=4 rep=3/3: fit_s=2.0127 total_s=2.8759
+E1B rows=581012 k=7 rep=1/3: fit_s=3.2038 total_s=4.1709
+E1B rows=581012 k=7 rep=2/3: fit_s=3.1875 total_s=4.1613
+E1B rows=581012 k=7 rep=3/3: fit_s=3.1964 total_s=4.1684
+E1B rows=581012 k=10 rep=1/3: fit_s=4.3829 total_s=5.4737
+E1B rows=581012 k=10 rep=2/3: fit_s=4.3500 total_s=5.4369
+E1B rows=581012 k=10 rep=3/3: fit_s=4.3553 total_s=5.4403
+E1B rows=581012 k=16 rep=1/3: fit_s=6.6388 total_s=7.9588
+E1B rows=581012 k=16 rep=2/3: fit_s=6.6502 total_s=7.9667
+E1B rows=581012 k=16 rep=3/3: fit_s=6.6553 total_s=7.9698
+E1C rows=1000000 k=7 rep=1/3: fit_s=5.4169 total_s=6.5944
+E1C rows=1000000 k=7 rep=2/3: fit_s=5.4369 total_s=6.6117
+E1C rows=1000000 k=7 rep=3/3: fit_s=5.4203 total_s=6.5967
+E1C rows=5000000 k=7 rep=1/3: fit_s=27.0523 total_s=29.3918
+E1C rows=5000000 k=7 rep=2/3: fit_s=27.0723 total_s=29.4136
+E1C rows=5000000 k=7 rep=3/3: fit_s=27.1618 total_s=29.5082
+E1C rows=10000000 k=7 rep=1/3: fit_s=54.2108 total_s=58.0121
+E1C rows=10000000 k=7 rep=2/3: fit_s=54.2535 total_s=58.0566
+E1C rows=10000000 k=7 rep=3/3: fit_s=54.5580 total_s=58.3691
+E1_exit=0
+1552578.stdct-mgmt-02_e1_serial.csv rows=39
+SERIAL_RC=0
