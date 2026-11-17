@@ -190,11 +190,12 @@ The provenance table, validation summary and report traceability map are under
 - `validation/REPORT_PROVENANCE.csv` — 23 records, with corrected relocated
   paths, recovery statuses and report sections.
 - `validation/PROVENANCE_VALIDATION.csv` — machine-readable existence, SHA-256,
-  row-count and status checks for all 23 records.
-- `validation/covertype91/` — preserved 91-iteration Covertype evidence and its
-  provenance note.
-- `validation/covertype91/COVTYPE_91_VS_46.md` — separation of the report's
-  91-iteration result from the separate 46-iteration Vanda campaign.
+  row-count and status checks for all 24 records.
+- `validation/covertype46/` — selected 46-iteration Covertype evidence, PBS
+  log, analysis script, Table 13 CSV and Figures 16–17 PDFs.
+- `validation/covertype91/` — historical 91-iteration Covertype evidence.
+- `validation/covertype91/COVTYPE_91_VS_46.md` — separation of the two
+  clustering outcomes.
 - `validation/SERIAL_OPENMP_COMPARABILITY.md` — why the serial and OpenMP
   one-thread absolute runtimes are not a controlled comparison.
 - `validation/REPORT_TRACEABILITY.md` — report v6 table/figure-to-source map.
@@ -204,5 +205,5 @@ The provenance table, validation summary and report traceability map are under
   unverified live status.
 
 Report v6 is the latest available report. No report PDF/ZIP is committed. The
-91-iteration result remains the report's Covertype result; the 46-iteration
-result is not a replacement.
+revised Section 15 selects the 46-iteration result; the 91-iteration result is
+historical evidence only.

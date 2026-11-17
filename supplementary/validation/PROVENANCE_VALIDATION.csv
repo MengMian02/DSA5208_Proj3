@@ -8,7 +8,7 @@ record,experiment,source,commit,file,file_exists,sha256,csv_rows,claimed_rows,st
 7,Pinned 256x1 GitHub,GitHub,c450025,results/vanda/e4_pinned_4x64_1556850.csv,true,b9b2b883993273030567e4ad277467cd89bdc6c24f293e78541830958b147874,5,5,VALID,yes,10,OK
 8,CUDA A40 GitHub,GitHub,c450025,results/vanda/e7_cuda_1554475.csv,true,59d33f9abdda363704d2dc8cbef438cc8fbd210b123bef5d2985d3e1f71d0a64,30,30,VALID_WITH_LIMITATIONS,yes,11,OK
 9,Metal Apple GitHub,GitHub,c450025,results/e6_metal.csv,true,dd6f6763a7bd7fea0050a4a68055adf0097dba45aafa9733889a1651fa0fb465,30,30,VALID_WITH_LIMITATIONS,yes,11,OK
-10,Covertype E9 91-iteration,GitHub,c450025,supplementary/validation/covertype91/covtype_converged.log,true,95c865dc84e0811c405bf955be9ecfebf32d5a376db37bfe047a5000ecb01074,0,1,VALID,yes,15,LOG_PRESERVED
+10,Covertype E9 91-iteration,GitHub,c450025,supplementary/validation/covertype91/covtype_converged.log,true,95c865dc84e0811c405bf955be9ecfebf32d5a376db37bfe047a5000ecb01074,0,1,VALID,no,15,LOG_PRESERVED
 11,E1 serial supplementary,Supplementary,ab64b19,supplementary/results/1552578.stdct-mgmt-02_e1_serial.csv,true,f67f21c55e6e14481ad5d100fafdb1a6b3ba8f788436643bab25e486cda63c58,39,39,VALID,no,6,OK
 12,E2 strong partial supplementary,Supplementary,ab64b19,supplementary/results/1557218.stdct-mgmt-02_e2_strong.csv,true,884934d057a8c8f897899aa2f4c180142c1316a95a0fc8293df8e41c1fe83be8,24,24,PARTIAL,no,7,OK
 13,E2 1-rank recovery,Supplementary,ab64b19,supplementary/results/1563234.stdct-mgmt-02_e2_rank1_recovery.csv,true,499af693d7ef17bde4379e7ce96ac6044c278b051fc2d6431f8bf7d32042dfd1,3,3,VALID_STANDALONE,no,7,OK
@@ -22,3 +22,4 @@ record,experiment,source,commit,file,file_exists,sha256,csv_rows,claimed_rows,st
 21,E6-256 recovery,Supplementary,b655469,supplementary/results/1563235.stdct-mgmt-02_e6_256_rank1_recovery.csv,true,0c4333dd50bb950845a04a695d021224effb78ab07242128411eba3283c002bd,3,3,COMPLETE,yes,10,OK
 22,E6-128 backup,Supplementary,pending,,false,,0,0,QUEUED,no,10,PENDING_NO_RESULT
 23,E6-128 original,Supplementary,pending,,false,,0,0,QUEUED,no,10,PENDING_NO_RESULT
+24,Covertype E9 46-iteration,Supplementary,425c420,supplementary/validation/covertype46/covertype_metrics.json,true,cc753d2e8045c51eea5a6439d96437de3a2af182594f4e0f44a7cd24936a27a1,0,1,VALID,yes,15,JSON_OK

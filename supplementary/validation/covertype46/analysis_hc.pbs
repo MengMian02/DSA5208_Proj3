@@ -1,0 +1,26 @@
+#!/bin/bash
+#PBS -N km-hc-analysis
+#PBS -P personal-harry_chen
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:30:00
+#PBS -l select=1:ncpus=1:mpiprocs=1:ompthreads=1:mem=16gb
+#PBS -q auto_free
+#
+# Real-data analysis run: converged K-means on the ORIGINAL Covertype data.
+# Writes the final centroid matrix; labels, ARI/NMI and cluster profiles are
+# computed from it locally. This is a convergence run, not a fixed-iteration
+# benchmark.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common_harry.sh
+preflight
+require_binaries
+
+OUT="$RESULTS_DIR/covtype_converged_${PBS_JOBID}"
+mkdir -p "$OUT"
+echo "out=$OUT"
+./kmeans_serial data/covtype.data 7 300 42 --centroids "$OUT/centroids.csv" \
+  | tee "$OUT/serial_converged.log"
+rc=${PIPESTATUS[0]}
+echo "converged_run_rc=$rc"
+exit "$rc"

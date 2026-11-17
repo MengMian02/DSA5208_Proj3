@@ -34,5 +34,5 @@ run. The exact cause of the difference (binary/source revision,
 standard-library RNG/initialisation behaviour, input state, or another
 undocumented factor) has not been established.
 
-The report's 91-iteration result remains the reported result. The 46-iteration
-run is retained as separate evidence only.
+The revised Section 15 selects the 46-iteration result. The 91-iteration
+result is retained as historical evidence only; the two are not merged.
