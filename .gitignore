@@ -16,3 +16,10 @@ gpu/metal/kernels_source.h
 cache/
 *.metallib
 jobs/probe_*.txt
+
+kmeans_serial
+kmeans_openmp
+kmeans_mpi
+kmeans_hybrid
+kmeans_metal
+kmeans_cuda
