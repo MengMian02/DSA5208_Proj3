@@ -1,7 +1,7 @@
-# SUBMISSION_MANIFEST — Vanda account `harry_chen`
+# SUBMISSION_MANIFEST — Vanda campaign
 
 Updated 2026-11-16 13:20 SGT (downloaded outcomes). Workspace
-`/scratch/harry_chen/DSA5208_Proj3`; project `personal-harry_chen`.
+the supplementary Vanda workspace; project allocation is site-specific.
 `Q` = queued, `F` = finished, `—` = not submitted. A PBS job is never marked
 complete unless its CSV/log was inspected.
 
@@ -46,14 +46,14 @@ from the earlier jobs. E8 CUDA (30) and Metal (30) are preserved. See
 
 ## 3. Output paths
 
-All outputs go under `/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry/`
+All outputs go under the workspace results directory
 with the full PBS job ID in the filename, e.g.
 `<jobid>.stdct-mgmt-02_e2_strong.csv`. Logs are
-`/scratch/harry_chen/DSA5208_Proj3/<jobname>.o<jobid>`.
+`<workspace>/<jobname>.o<jobid>`.
 
 ## 4. Rules enforced
 
-* Only `personal-harry_chen` and `/scratch/harry_chen` are used.
+* Only the supplementary Vanda account and workspace are used.
 * No production job is released without E0 success (`afterok` dependency).
 * E0 certifies the hybrid mapping in `HYBRID_LAUNCH`; E6 reads that file.
 * No `pe=` mapping is used; balanced `ppr`/`node`/`slot` mappings with

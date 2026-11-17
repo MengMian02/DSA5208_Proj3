@@ -1,0 +1,9 @@
+rows=581012 features=54 k=7 max_iter=300 seed=42
+iterations=91 inertia=3712497.960091
+load_s=0.627271 preprocess_s=0.083950 init_s=0.095181 fit_s=12.414444 validation_s=0.104965 total_s=13.325810
+implementation=serial ranks=1 threads=1 total_workers=1 stopping_mode=convergence converged=true
+distribution_s=0 mpi_reduction_s=0 local_compute_s=12.414274 thread_reduction_s=0 centroid_update_s=0.000094 fit_min_s=12.414444 fit_imbalance_s=0 obs_per_rank=581012 weak=0
+cluster_sizes=77764,56307,50440,51673,125172,66197,153459
+label_hash=9039984004050467668
+csv_header=implementation,ranks,threads,total_workers,rows,features,k,max_iter,iterations,fit_s,sse,converged,stopping_mode,distribution_s,mpi_reduction_s,local_compute_s,thread_reduction_s,centroid_update_s,fit_min_s,fit_imbalance_s,obs_per_rank,weak
+csv=serial,1,1,1,581012,54,7,300,91,12.414444,3712497.960091,true,convergence,0,0,12.414274,0,0.000094,12.414444,0,581012,0

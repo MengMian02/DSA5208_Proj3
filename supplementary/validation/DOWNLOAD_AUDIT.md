@@ -1,12 +1,12 @@
-# DOWNLOAD_AUDIT — Vanda `harry_chen` campaign
+# DOWNLOAD_AUDIT — Vanda campaign
 
 Downloaded 2026-11-16 from
-`/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry/` and the job logs.
+the supplementary Vanda results directory and the job logs.
 Local root: `DSA5208_Proj3_Harry/results/vanda_harry/`; logs:
 `DSA5208_Proj3_Harry/hpc_download/logs/`; build certificate:
 `hpc_download/build/`.
 
-Status snapshot from `qstat -x -u harry_chen` at approximately 13:16 SGT and
+Status snapshot from the Vanda `qstat` history at approximately 13:16 SGT and
 `qstat -xf` for each job. Exit codes are PBS `Exit_status`. Actual walltime is
 computed from `stime`/`mtime`; it is not the requested walltime.
 
