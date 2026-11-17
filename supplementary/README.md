@@ -2,11 +2,7 @@
 
 ## 1. Purpose
 
-This directory contains the personal Vanda experiments that extend the team's
-main implementation: fixed-total 10M MPI strong scaling, Vanda OpenMP thread
-scaling, Hybrid MPI+OpenMP layouts, node/rank placement diagnostics, and the
-two targeted recoveries. It is self-contained and does not replace the main
-source tree or its benchmark results.
+This directory contains supplementary Vanda experiments extending the team's core implementation, including fixed-total 10M scaling, OpenMP thread scaling, Hybrid configurations, process-placement diagnostics, and targeted recovery experiments.
 
 ## 2. Relationship to the main implementation
 
