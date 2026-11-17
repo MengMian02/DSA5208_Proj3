@@ -1,0 +1,30 @@
+#!/bin/bash
+#PBS -N km-hc-e6-256r1
+#PBS -P YOUR_ALLOCATION
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:30:00
+#PBS -l select=4:ncpus=64:mpiprocs=64:ompthreads=1:mem=100gb
+#PBS -l place=scatter
+#PBS -q auto
+#
+# R1: recover the missing E6-256 256x1 layout. The original preflight used
+# ppr:64:node + --bind-to none and timed out at 90 s. This recovery uses the
+# pinned mapping already validated by the teammate's 256x1 experiment:
+# --map-by core --bind-to core on four exclusive 64-core nodes.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/common.sh
+preflight
+require_binaries
+OUT=$(job_results_path e6_256_rank1_recovery)
+echo "results=$OUT"
+python3 scripts/run_mpi.py --experiment hybrid --layouts 256x1 \
+  --resampled-total 10000000 --repetitions 3 --k 7 --max-iter 30 \
+  --nodes 4 --binding hybrid-auto --preflight-rows 20000 \
+  --preflight-timeout 90 --timeout 180 \
+  --dataset-label covtype_resampled_10M_256r1 --results "$OUT"
+status=$?
+rows=0; [ -f "$OUT" ] && rows=$(($(wc -l < "$OUT") - 1))
+echo "E6_256_R1_exit=$status rows=$rows expected=3"
+[ "$status" -eq 0 ] && [ "$rows" -eq 3 ] || exit 1
+exit 0

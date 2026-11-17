@@ -1,0 +1,4 @@
+5fb9af7bdcf92de55078dc053009f956  kmeans_serial
+44f873ae61b6f262e7568c767eab8ed1  kmeans_openmp
+9ca3cdba4f9b5bc5d7e8470085a93783  kmeans_mpi
+4d3d58d9e494528e87b08ddef9f73dc9  kmeans_hybrid

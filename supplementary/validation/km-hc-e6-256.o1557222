@@ -1,0 +1,53 @@
+job=1557222.stdct-mgmt-02 host=CN-001 date=2026-11-16T00:29:04+08:00
+workdir=/scratch/harry_chen/DSA5208_Proj3 results=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry logs=/scratch/harry_chen/DSA5208_Proj3/logs
+nodes=cn-001.stdct.loc cn-003.stdct.loc gn-a40-079.stdct.loc gn-a40-086.stdct.loc 
+ncpus_requested=unset
+mpicxx=/cm/shared/apps/openmpi4/gcc/4.1.8/bin/mpicxx g++ (GCC) 11.4.1 20231218 (Red Hat 11.4.1-3)
+python3=/bin/python3 Python 3.9.18
+== allocation ==
+     64 cn-001.stdct.loc
+     64 cn-003.stdct.loc
+     64 gn-a40-079.stdct.loc
+     64 gn-a40-086.stdct.loc
+nnodes=4
+hybrid_mapping=ppr-none
+results=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry/1557222.stdct-mgmt-02_e6_hybrid_256.csv
+PREFLIGHT FAILED E4 preflight ranks=256 threads=1: command failed (124): /bin/timeout -k 10 90 mpirun --map-by ppr:64:node --bind-to none -np 256 /scratch/harry_chen/DSA5208_Proj3/kmeans_hybrid /scratch/harry_chen/DSA5208_Proj3/data/covtype.data 7 1 42 --fixed-iterations --rows 20000
+stdout tail:
+
+stderr tail:
+
+1 run(s) failed; see /scratch/harry_chen/DSA5208_Proj3/results/failures.log
+PREFLIGHT E4 preflight ranks=256 threads=1: mpirun --map-by ppr:64:node --bind-to none -np 256 /scratch/harry_chen/DSA5208_Proj3/kmeans_hybrid /scratch/harry_chen/DSA5208_Proj3/data/covtype.data 7 1 42 --fixed-iterations --rows 20000
+PREFLIGHT E4 preflight ranks=128 threads=2: mpirun --map-by ppr:32:node --bind-to none -np 128 /scratch/harry_chen/DSA5208_Proj3/kmeans_hybrid /scratch/harry_chen/DSA5208_Proj3/data/covtype.data 7 1 42 --fixed-iterations --rows 20000
+PREFLIGHT PASS E4 preflight ranks=128 threads=2 hash=2704054595995562619
+E4 ranks=128 threads=2 rep=1/3: fit_s=0.5451 local=0.4216 coll=0.3080 obs/rank=78125
+E4 ranks=128 threads=2 rep=2/3: fit_s=0.4972 local=0.4192 coll=0.2629 obs/rank=78125
+E4 ranks=128 threads=2 rep=3/3: fit_s=0.4911 local=0.4049 coll=0.2587 obs/rank=78125
+PREFLIGHT E4 preflight ranks=64 threads=4: mpirun --map-by ppr:16:node --bind-to none -np 64 /scratch/harry_chen/DSA5208_Proj3/kmeans_hybrid /scratch/harry_chen/DSA5208_Proj3/data/covtype.data 7 1 42 --fixed-iterations --rows 20000
+PREFLIGHT PASS E4 preflight ranks=64 threads=4 hash=2704054595995562619
+E4 ranks=64 threads=4 rep=1/3: fit_s=0.4891 local=0.4590 coll=0.2203 obs/rank=156250
+E4 ranks=64 threads=4 rep=2/3: fit_s=0.5738 local=0.4694 coll=0.2984 obs/rank=156250
+E4 ranks=64 threads=4 rep=3/3: fit_s=0.4681 local=0.4457 coll=0.2200 obs/rank=156250
+PREFLIGHT E4 preflight ranks=32 threads=8: mpirun --map-by ppr:8:node --bind-to none -np 32 /scratch/harry_chen/DSA5208_Proj3/kmeans_hybrid /scratch/harry_chen/DSA5208_Proj3/data/covtype.data 7 1 42 --fixed-iterations --rows 20000
+PREFLIGHT PASS E4 preflight ranks=32 threads=8 hash=2704054595995562619
+E4 ranks=32 threads=8 rep=1/3: fit_s=0.5965 local=0.4849 coll=0.2696 obs/rank=312500
+E4 ranks=32 threads=8 rep=2/3: fit_s=0.5121 local=0.4819 coll=0.2183 obs/rank=312500
+E4 ranks=32 threads=8 rep=3/3: fit_s=0.5034 local=0.4756 coll=0.1790 obs/rank=312500
+PREFLIGHT E4 preflight ranks=16 threads=16: mpirun --map-by ppr:4:node --bind-to none -np 16 /scratch/harry_chen/DSA5208_Proj3/kmeans_hybrid /scratch/harry_chen/DSA5208_Proj3/data/covtype.data 7 1 42 --fixed-iterations --rows 20000
+PREFLIGHT PASS E4 preflight ranks=16 threads=16 hash=2704054595995562619
+E4 ranks=16 threads=16 rep=1/3: fit_s=0.5096 local=0.4871 coll=0.2193 obs/rank=625000
+E4 ranks=16 threads=16 rep=2/3: fit_s=0.5393 local=0.5078 coll=0.1761 obs/rank=625000
+E4 ranks=16 threads=16 rep=3/3: fit_s=0.5347 local=0.4992 coll=0.2472 obs/rank=625000
+PREFLIGHT E4 preflight ranks=8 threads=32: mpirun --map-by ppr:2:node --bind-to none -np 8 /scratch/harry_chen/DSA5208_Proj3/kmeans_hybrid /scratch/harry_chen/DSA5208_Proj3/data/covtype.data 7 1 42 --fixed-iterations --rows 20000
+PREFLIGHT PASS E4 preflight ranks=8 threads=32 hash=2704054595995562619
+E4 ranks=8 threads=32 rep=1/3: fit_s=0.5584 local=0.5243 coll=0.1084 obs/rank=1250000
+E4 ranks=8 threads=32 rep=2/3: fit_s=0.5842 local=0.5651 coll=0.1794 obs/rank=1250000
+E4 ranks=8 threads=32 rep=3/3: fit_s=0.5504 local=0.5225 coll=0.0934 obs/rank=1250000
+PREFLIGHT E4 preflight ranks=4 threads=64: mpirun --map-by ppr:1:node --bind-to none -np 4 /scratch/harry_chen/DSA5208_Proj3/kmeans_hybrid /scratch/harry_chen/DSA5208_Proj3/data/covtype.data 7 1 42 --fixed-iterations --rows 20000
+PREFLIGHT PASS E4 preflight ranks=4 threads=64 hash=2704054595995562619
+E4 ranks=4 threads=64 rep=1/3: fit_s=0.5994 local=0.5641 coll=0.0945 obs/rank=2500000
+E4 ranks=4 threads=64 rep=2/3: fit_s=0.5471 local=0.5341 coll=0.1583 obs/rank=2500000
+E4 ranks=4 threads=64 rep=3/3: fit_s=0.6819 local=0.6301 coll=0.1724 obs/rank=2500000
+E6_256_exit=1 rows=18 expected=21
+E6_256 INCOMPLETE (failed layouts are in results/failures.log)

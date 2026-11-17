@@ -1,0 +1,12 @@
+[2026-11-16T00:26:29] e2 mpirun --map-by core --bind-to core -np 1 /scratch/harry_chen/DSA5208_Proj3/kmeans_mpi /scratch/harry_chen/DSA5208_Proj3/data/covtype.data 7 30 42 --fixed-iterations
+  command failed (124): /bin/timeout -k 10 300 mpirun --map-by core --bind-to core -np 1 /scratch/harry_chen/DSA5208_Proj3/kmeans_mpi /scratch/harry_chen/DSA5208_Proj3/data/covtype.data 7 30 42 --fixed-iterations
+stdout tail:
+
+stderr tail:
+
+[2026-11-16T00:30:39] e4 mpirun --map-by ppr:64:node --bind-to none -np 256 /scratch/harry_chen/DSA5208_Proj3/kmeans_hybrid /scratch/harry_chen/DSA5208_Proj3/data/covtype.data 7 1 42 --fixed-iterations --rows 20000
+  command failed (124): /bin/timeout -k 10 90 mpirun --map-by ppr:64:node --bind-to none -np 256 /scratch/harry_chen/DSA5208_Proj3/kmeans_hybrid /scratch/harry_chen/DSA5208_Proj3/data/covtype.data 7 1 42 --fixed-iterations --rows 20000
+stdout tail:
+
+stderr tail:
+

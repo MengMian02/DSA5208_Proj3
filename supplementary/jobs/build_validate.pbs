@@ -1,0 +1,25 @@
+#!/bin/bash
+#PBS -N km-sup-build
+#PBS -P YOUR_ALLOCATION
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:20:00
+#PBS -l select=1:ncpus=8:mpiprocs=1:ompthreads=1:mem=16gb
+#PBS -l place=scatter
+#PBS -q auto_free
+#
+# Build the supplementary binaries from supplementary/src and run a short
+# deterministic serial/OpenMP correctness check. This is not a benchmark.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/common.sh
+preflight
+make -f src/Makefile -B all
+require_binaries
+printf 'ppr-none\n' > HYBRID_LAUNCH
+./kmeans_serial data/covtype.data 7 5 42 --fixed-iterations --rows 20000 | tee /tmp/sup_serial.log
+OMP_NUM_THREADS=2 ./kmeans_openmp data/covtype.data 7 5 42 --fixed-iterations --rows 20000 | tee /tmp/sup_omp.log
+S=$(sed -n 's/^label_hash=//p' /tmp/sup_serial.log)
+O=$(sed -n 's/^label_hash=//p' /tmp/sup_omp.log)
+echo "serial_hash=$S openmp_hash=$O"
+[ -n "$S" ] && [ "$S" = "$O" ] || { echo "SUPPLEMENTARY BUILD VALIDATION FAILED" >&2; exit 1; }
+echo "SUPPLEMENTARY BUILD VALIDATION PASSED"

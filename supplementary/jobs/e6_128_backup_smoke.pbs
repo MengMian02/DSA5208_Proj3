@@ -1,0 +1,35 @@
+#!/bin/bash
+#PBS -N km-hc-e6-128s
+#PBS -P YOUR_ALLOCATION
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:20:00
+#PBS -l select=2:ncpus=64:mpiprocs=64:ompthreads=1:mem=100gb
+#PBS -l place=scatter
+#PBS -q auto_free
+#
+# D3: smoke test for the independent E6-128 backup. Exact 2-node x 64-core
+# shape and launcher patterns, but a small 200k workload and 2 iterations.
+# Original queued E6-128 job 1557221 is not touched.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/common.sh
+preflight
+require_binaries
+echo "== allocation =="; sort "$PBS_NODEFILE" | uniq -c
+echo "== rank placement / affinity: 128x1 =="
+timeout -k 5 60 mpirun --map-by core --bind-to core -np 128 \
+  bash -c 'echo "$(hostname) $(taskset -pc $$)"' 2>/dev/null | sort | uniq -c | head -8
+echo "== rank placement: 64x2 =="
+timeout -k 5 60 env OMP_NUM_THREADS=2 mpirun --map-by ppr:32:node --bind-to none -np 64 hostname 2>/dev/null | sort | uniq -c
+OUT=$(job_results_path e6_128_backup_smoke)
+echo "results=$OUT"
+python3 scripts/run_mpi.py --experiment hybrid \
+  --layouts 128x1,64x2,32x4,16x8 --resampled-total 200000 \
+  --repetitions 1 --k 7 --max-iter 2 --nodes 2 --binding hybrid-auto \
+  --preflight-rows 20000 --preflight-timeout 90 --timeout 120 \
+  --dataset-label covtype_resampled_200k_smoke --results "$OUT"
+status=$?
+rows=0; [ -f "$OUT" ] && rows=$(($(wc -l < "$OUT") - 1))
+echo "E6_128_smoke_exit=$status rows=$rows expected=4"
+[ "$status" -eq 0 ] && [ "$rows" -eq 4 ] || exit 1
+exit 0

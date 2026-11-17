@@ -1,0 +1,27 @@
+#!/bin/bash
+#PBS -N km-hc-serial
+#PBS -P YOUR_ALLOCATION
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=01:30:00
+#PBS -l select=1:ncpus=1:mpiprocs=1:ompthreads=1:mem=16gb
+#PBS -q auto_free
+#
+# E1 serial scaling on one core: the existing N/K grids plus the fixed-total
+# resampled sizes 1M, 5M and 10M (same generator as the MPI large workload).
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/common.sh
+preflight
+require_binaries
+
+rc=0
+OUT=$(job_results_path e1_serial)
+echo "results_e1=$OUT"
+python3 scripts/run_e1.py --implementation serial --grid both \
+  --resampled-totals 1000000,5000000,10000000 \
+  --repetitions 3 --max-iter 30 --results "$OUT"
+status=$?; echo "E1_exit=$status"; [ $status -eq 0 ] || rc=1
+
+[ -f "$OUT" ] && echo "$(basename "$OUT") rows=$(($(wc -l < "$OUT") - 1))"
+echo "SERIAL_RC=$rc"
+exit "$rc"

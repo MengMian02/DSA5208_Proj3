@@ -1,0 +1,53 @@
+#!/bin/bash
+#PBS -N km-hc-e7layout
+#PBS -P YOUR_ALLOCATION
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:25:00
+#PBS -l select=8:ncpus=32:mpiprocs=32:ompthreads=1
+#PBS -l place=scatter
+#PBS -q auto
+#
+# E7: controlled node-layout/placement diagnostic on ONE 8 x 32-core CN
+# allocation. The same allocation is used for three legal rank mappings, so the
+# comparison isolates rank-per-node placement from hardware family:
+#   core    : --map-by core          (32 ranks/node, 256 ranks = 8 nodes)
+#   ppr32   : --map-by ppr:32:node   (32 ranks/node)
+#   ppr16   : --map-by ppr:16:node   (16 ranks/node, 128 ranks = 8 nodes)
+# The historical 4x64 result used GN-A40 nodes and is therefore hardware-
+# confounded; it is analysed separately and never merged into this curve.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/common.sh
+preflight
+require_binaries
+
+echo "== allocation =="
+sort "$PBS_NODEFILE" | uniq -c
+nnodes=$(sort -u "$PBS_NODEFILE" | wc -l)
+echo "nnodes=$nnodes"
+[ "$nnodes" -eq 8 ] || { echo "ERROR: expected 8 nodes, got $nnodes" >&2; exit 4; }
+
+rc=0
+run_case() {
+  label="$1"; flags="$2"; ranks="$3"; reps="$4"
+  echo "===== $label ranks=$ranks flags=$flags ====="
+  echo "--- placement ---"
+  timeout -k 5 120 mpirun $flags -np "$ranks" hostname 2>/dev/null | sort | uniq -c
+  OUT=$(job_results_path "e7_${label}")
+  echo "results=$OUT"
+  MPI_FLAGS="$flags" python3 scripts/run_mpi.py --experiment strong \
+    --ranks "$ranks" --repetitions "$reps" --k 7 --max-iter 30 \
+    --nodes 8 --binding core --timeout 300 \
+    --dataset-label "covtype_original_${label}" --results "$OUT"
+  s=$?
+  rows=0; [ -f "$OUT" ] && rows=$(($(wc -l < "$OUT") - 1))
+  echo "$label exit=$s rows=$rows"
+  [ "$s" -eq 0 ] || rc=1
+}
+
+run_case core "--map-by core --bind-to core" 128,256 2
+run_case ppr32 "--map-by ppr:32:node --bind-to core" 128,256 2
+run_case ppr16 "--map-by ppr:16:node --bind-to core" 128 2
+
+echo "E7_RC=$rc"
+exit "$rc"

@@ -1,0 +1,45 @@
+#!/bin/bash
+#PBS -N km-hc-e5omp
+#PBS -P YOUR_ALLOCATION
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:40:00
+#PBS -l select=1:ncpus=64:mpiprocs=1:ompthreads=1:mem=64gb
+#PBS -q auto_free
+#
+# E5: OpenMP-only thread scaling on one exclusive 64-core node. The PBS
+# ompthreads=1 is allocation metadata only; run_openmp.py sets OMP_NUM_THREADS
+# per run and verifies the thread count reported by the binary.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/common.sh
+preflight
+require_binaries
+
+echo "== allocation =="
+sort "$PBS_NODEFILE" | uniq -c
+nnodes=$(sort -u "$PBS_NODEFILE" | wc -l)
+[ "$nnodes" -eq 1 ] || { echo "ERROR: E5 must run on one node" >&2; exit 4; }
+
+OUT1=$(job_results_path e5_openmp_original)
+OUT2=$(job_results_path e5_openmp_10m)
+echo "results_original=$OUT1"
+echo "results_10m=$OUT2"
+rc=0
+
+python3 scripts/run_openmp.py --threads 1,2,4,8,16,32,64 \
+  --repetitions 3 --k 7 --max-iter 30 --timeout 900 \
+  --dataset-label covtype_original --results "$OUT1"
+s1=$?; echo "E5_original_exit=$s1"; [ $s1 -eq 0 ] || rc=1
+
+python3 scripts/run_openmp.py --threads 1,2,4,8,16,32,64 \
+  --repetitions 3 --k 7 --max-iter 30 --timeout 900 \
+  --resampled-total 10000000 --dataset-label covtype_resampled_10M --results "$OUT2"
+s2=$?; echo "E5_10m_exit=$s2"; [ $s2 -eq 0 ] || rc=1
+
+for f in "$OUT1" "$OUT2"; do
+  rows=0; [ -f "$f" ] && rows=$(($(wc -l < "$f") - 1))
+  echo "$(basename "$f") rows=$rows expected=21"
+  [ "$rows" -eq 21 ] || rc=1
+done
+echo "E5_RC=$rc"
+exit "$rc"

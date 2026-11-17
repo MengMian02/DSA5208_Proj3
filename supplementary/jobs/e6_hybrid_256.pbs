@@ -1,0 +1,52 @@
+#!/bin/bash
+#PBS -N km-hc-e6-256
+#PBS -P YOUR_ALLOCATION
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:45:00
+#PBS -l select=4:ncpus=64:mpiprocs=64:ompthreads=1:mem=100gb
+#PBS -l place=scatter
+#PBS -q auto
+#
+# E6: Hybrid MPI+OpenMP at a fixed 256-core budget on the 10,000,000
+# resampled workload (K=7, D=54, I=30). Every layout has ranks x threads =
+# 256. The launch uses ppr:<ranks-per-node>:node with --bind-to none and
+# OMP_PROC_BIND=false; the pe= mapping forms hang under Vanda's PBS TM launch.
+# Each layout gets a one-iteration preflight and a hard timeout, so a bad layout
+# is recorded and skipped instead of consuming the whole allocation.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/common.sh
+preflight
+require_binaries
+
+echo "== allocation =="
+sort "$PBS_NODEFILE" | uniq -c
+nnodes=$(sort -u "$PBS_NODEFILE" | wc -l)
+echo "nnodes=$nnodes"
+[ "$nnodes" -eq 4 ] || { echo "ERROR: expected 4 nodes, got $nnodes" >&2; exit 4; }
+
+export OMP_DYNAMIC=false
+export OMP_PROC_BIND=false
+unset OMP_PLACES
+
+HYBRID_MODE=$(cat "$WORKDIR/HYBRID_LAUNCH" 2>/dev/null || true)
+HYBRID_MODE=${HYBRID_MODE:-ppr-none}
+echo "hybrid_mapping=$HYBRID_MODE"
+
+OUT=$(job_results_path e6_hybrid_256)
+echo "results=$OUT"
+python3 scripts/run_mpi.py --experiment hybrid \
+  --layouts 256x1,128x2,64x4,32x8,16x16,8x32,4x64 \
+  --resampled-total 10000000 --repetitions 3 --k 7 --max-iter 30 \
+  --nodes 4 --binding "$HYBRID_MODE" --preflight-rows 20000 \
+  --preflight-timeout 90 --timeout 180 \
+  --dataset-label covtype_resampled_10M_256core --results "$OUT"
+status=$?
+rows=0; [ -f "$OUT" ] && rows=$(($(wc -l < "$OUT") - 1))
+expected=21
+echo "E6_256_exit=$status rows=$rows expected=$expected"
+if [ "$status" -ne 0 ] || [ "$rows" -ne "$expected" ]; then
+  echo "E6_256 INCOMPLETE (failed layouts are in results/failures.log)" >&2
+  exit 1
+fi
+echo "E6_256 COMPLETE"

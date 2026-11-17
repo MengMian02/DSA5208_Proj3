@@ -1,0 +1,57 @@
+job=1557219.stdct-mgmt-02 host=IN-012 date=2026-11-15T22:56:20+08:00
+workdir=/scratch/harry_chen/DSA5208_Proj3 results=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry logs=/scratch/harry_chen/DSA5208_Proj3/logs
+nodes=in-012.stdct.loc 
+ncpus_requested=unset
+mpicxx=/cm/shared/apps/openmpi4/gcc/4.1.8/bin/mpicxx g++ (GCC) 11.4.1 20231218 (Red Hat 11.4.1-3)
+python3=/bin/python3 Python 3.9.18
+== allocation ==
+      1 in-012.stdct.loc
+results_original=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry/1557219.stdct-mgmt-02_e5_openmp_original.csv
+results_10m=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry/1557219.stdct-mgmt-02_e5_openmp_10m.csv
+E5 threads=1 rep=1/3: fit_s=2.9902 total_s=4.3908
+E5 threads=1 rep=2/3: fit_s=2.5279 total_s=3.3294
+E5 threads=1 rep=3/3: fit_s=2.5302 total_s=3.3289
+E5 threads=2 rep=1/3: fit_s=2.2866 total_s=3.0848
+E5 threads=2 rep=2/3: fit_s=2.0053 total_s=2.8077
+E5 threads=2 rep=3/3: fit_s=1.9829 total_s=2.7847
+E5 threads=4 rep=1/3: fit_s=1.1444 total_s=1.9448
+E5 threads=4 rep=2/3: fit_s=0.9701 total_s=1.7691
+E5 threads=4 rep=3/3: fit_s=0.9795 total_s=1.7794
+E5 threads=8 rep=1/3: fit_s=0.7161 total_s=1.5155
+E5 threads=8 rep=2/3: fit_s=0.6203 total_s=1.4187
+E5 threads=8 rep=3/3: fit_s=0.5049 total_s=1.3033
+E5 threads=16 rep=1/3: fit_s=0.3794 total_s=1.1786
+E5 threads=16 rep=2/3: fit_s=0.3640 total_s=1.1625
+E5 threads=16 rep=3/3: fit_s=0.3707 total_s=1.1690
+E5 threads=32 rep=1/3: fit_s=0.1976 total_s=1.0065
+E5 threads=32 rep=2/3: fit_s=0.1964 total_s=0.9986
+E5 threads=32 rep=3/3: fit_s=0.1967 total_s=0.9943
+E5 threads=64 rep=1/3: fit_s=0.1049 total_s=0.9039
+E5 threads=64 rep=2/3: fit_s=0.1045 total_s=0.9055
+E5 threads=64 rep=3/3: fit_s=0.1043 total_s=0.9176
+E5_original_exit=0
+E5 threads=1 rep=1/3: fit_s=43.2469 total_s=46.4795
+E5 threads=1 rep=2/3: fit_s=43.4167 total_s=46.7345
+E5 threads=1 rep=3/3: fit_s=43.4552 total_s=46.7152
+E5 threads=2 rep=1/3: fit_s=31.2041 total_s=34.4827
+E5 threads=2 rep=2/3: fit_s=30.3819 total_s=33.6873
+E5 threads=2 rep=3/3: fit_s=30.8255 total_s=34.0899
+E5 threads=4 rep=1/3: fit_s=16.8825 total_s=20.2020
+E5 threads=4 rep=2/3: fit_s=16.8540 total_s=20.2056
+E5 threads=4 rep=3/3: fit_s=16.8507 total_s=20.2147
+E5 threads=8 rep=1/3: fit_s=9.1924 total_s=12.5572
+E5 threads=8 rep=2/3: fit_s=8.9654 total_s=12.2974
+E5 threads=8 rep=3/3: fit_s=8.7977 total_s=12.0914
+E5 threads=16 rep=1/3: fit_s=5.0346 total_s=8.3271
+E5 threads=16 rep=2/3: fit_s=4.7605 total_s=8.0525
+E5 threads=16 rep=3/3: fit_s=4.7963 total_s=8.1350
+E5 threads=32 rep=1/3: fit_s=3.0350 total_s=6.3222
+E5 threads=32 rep=2/3: fit_s=2.8320 total_s=6.1494
+E5 threads=32 rep=3/3: fit_s=3.0521 total_s=6.3663
+E5 threads=64 rep=1/3: fit_s=1.8163 total_s=5.1309
+E5 threads=64 rep=2/3: fit_s=1.7562 total_s=5.0354
+E5 threads=64 rep=3/3: fit_s=1.7652 total_s=5.0812
+E5_10m_exit=0
+1557219.stdct-mgmt-02_e5_openmp_original.csv rows=21 expected=21
+1557219.stdct-mgmt-02_e5_openmp_10m.csv rows=21 expected=21
+E5_RC=0

@@ -1,0 +1,39 @@
+#!/bin/bash
+#PBS -N km-hc-e2strong
+#PBS -P YOUR_ALLOCATION
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:25:00
+#PBS -l select=4:ncpus=64:mpiprocs=64:ompthreads=1
+#PBS -l place=scatter
+#PBS -q auto
+#
+# E2: MPI-only strong scaling on the ORIGINAL Covertype data (581012, K=7,
+# D=54, I=30), 1..256 ranks, 3 repetitions. 4 nodes x 64 cores = 256 cores.
+# ompthreads=1 describes the allocation; every run is MPI-only.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/common.sh
+preflight
+require_binaries
+
+echo "== allocation =="
+sort "$PBS_NODEFILE" | uniq -c
+nnodes=$(sort -u "$PBS_NODEFILE" | wc -l)
+echo "nnodes=$nnodes"
+[ "$nnodes" -eq 4 ] || { echo "ERROR: expected 4 nodes, got $nnodes" >&2; exit 4; }
+
+OUT=$(job_results_path e2_strong)
+echo "results=$OUT"
+python3 scripts/run_mpi.py --experiment strong \
+  --ranks 1,2,4,8,16,32,64,128,256 \
+  --repetitions 3 --k 7 --max-iter 30 --nodes 4 --binding core --timeout 300 \
+  --dataset-label covtype_original --results "$OUT"
+status=$?
+rows=0
+[ -f "$OUT" ] && rows=$(($(wc -l < "$OUT") - 1))
+echo "E2_exit=$status rows=$rows expected=27"
+if [ "$status" -ne 0 ] || [ "$rows" -ne 27 ]; then
+  echo "E2 INCOMPLETE" >&2
+  exit 1
+fi
+echo "E2 COMPLETE"

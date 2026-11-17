@@ -1,0 +1,11 @@
+job=1563234.stdct-mgmt-02 host=IN-010 date=2026-11-16T13:48:40+08:00
+workdir=/scratch/harry_chen/DSA5208_Proj3 results=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry logs=/scratch/harry_chen/DSA5208_Proj3/logs
+nodes=in-010.stdct.loc 
+ncpus_requested=unset
+mpicxx=/cm/shared/apps/openmpi4/gcc/4.1.8/bin/mpicxx g++ (GCC) 11.4.1 20231218 (Red Hat 11.4.1-3)
+python3=/bin/python3 Python 3.9.18
+results=/scratch/harry_chen/DSA5208_Proj3/results/vanda_harry/1563234.stdct-mgmt-02_e2_rank1_recovery.csv
+E2 ranks=1 threads=1 rep=1/3: fit_s=4.0744 local=4.0743 coll=0.0001 obs/rank=581012
+E2 ranks=1 threads=1 rep=2/3: fit_s=3.4119 local=3.4118 coll=0.0001 obs/rank=581012
+E2 ranks=1 threads=1 rep=3/3: fit_s=3.4293 local=3.4292 coll=0.0001 obs/rank=581012
+E2_R1_exit=0 rows=3 expected=3

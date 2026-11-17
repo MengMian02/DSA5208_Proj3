@@ -200,3 +200,11 @@ Nothing there has been submitted; see jobs/README.md and docs/HPC_LOG.md.
     figures/                 generated plots
     docs/                    experiment manifest, implementation report, HPC log
     data/                    Covertype data set + documentation
+
+## Supplementary HPC Experiments
+
+The team conducted additional experiments to investigate large-workload MPI
+scaling, OpenMP thread scaling, Hybrid MPI+OpenMP rank/thread configurations,
+and MPI process placement and communication overhead. The reproducible package,
+including its own build, scripts, PBS jobs, verified CSVs and validation
+evidence, is documented in [`supplementary/README.md`](supplementary/README.md).

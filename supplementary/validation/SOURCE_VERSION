@@ -1,0 +1,6 @@
+branch=repair-2026-11-14
+commit=425c420
+base_commit=f70e611
+date=2026-11-14T10:20:24Z
+features=serial,openmp,mpi,hybrid,fixed-total-resampling,weak-scaling,cuda-metal-preserved
+notes=hybrid ppr-none launch, bounded timeouts, build checksums
