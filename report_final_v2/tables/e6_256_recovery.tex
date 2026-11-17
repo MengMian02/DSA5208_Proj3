@@ -1,0 +1,13 @@
+\begin{tabular}{rrrlrr}
+\toprule
+ranks & threads & workers & binding/allocation & median fit (s) & reps\\
+\midrule
+128 & 2 & 256 & unpinned; original 4$\times$64 & 0.4972 & 3\\
+64 & 4 & 256 & unpinned; original 4$\times$64 & 0.4891 & 3\\
+32 & 8 & 256 & unpinned; original 4$\times$64 & 0.5121 & 3\\
+16 & 16 & 256 & unpinned; original 4$\times$64 & 0.5347 & 3\\
+8 & 32 & 256 & unpinned; original 4$\times$64 & 0.5584 & 3\\
+4 & 64 & 256 & unpinned; original 4$\times$64 & 0.5994 & 3\\
+256 & 1 & 256 & pinned core; separate 4$\times$CN & 0.3201 & 3\\
+\bottomrule
+\end{tabular}

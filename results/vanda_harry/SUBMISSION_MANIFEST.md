@@ -36,6 +36,7 @@ outcomes are below; a PBS exit code is not treated as proof of complete output.
 | E6-64 | Hybrid | **1557220** | 1×64, 40 min, `auto_free` | 21 | **21** | seven layouts complete | **COMPLETE** |
 | E6-128 | Hybrid | **1557221** | 2×64, 35 min, `auto_free` | 18 | **0** | still queued: insufficient node_pool | **QUEUED** |
 | E6-256 | Hybrid | **1557222** | 4×64, 45 min, `auto` | 21 | **18** | 256×1 preflight timed out; six other layouts complete | **PARTIAL** |
+| E6-256-R1 | 256×1 recovery | **1563235** | 4×64, 30 min, `auto` | 3 | **3** | median 0.32014 s; hash `14076111245358280480`; pinned core, 4×CN | **COMPLETE** |
 | E7 | node layout | **1557223** | 8×32, 25 min, `auto` | 10 | **10** | core/ppr32/ppr16 CSVs complete | **COMPLETE** |
 
 E1 (39 rows), E3 large (27), E4 weak (27) and E9 (converged run) are complete

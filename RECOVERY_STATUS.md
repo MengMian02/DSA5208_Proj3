@@ -8,7 +8,7 @@ queued** and was not cancelled, modified or removed.
 | Purpose | Job ID | Request | Walltime | Dependency | State at finalization |
 |---|---|---|---:|---|---|
 | E2 1-rank × 1-thread recovery | **1563234** | 1 core, IN node | 00:15 | none | **F, exit 0**; 3/3 rows, median 3.429 s, hash `15912193932519828622` |
-| E6-256 256×1 recovery | **1563235** | 4×64 cores | 00:30 | none | **Q** at finalization |
+| E6-256 256×1 recovery | **1563235** | 4×64 cores | 00:30 | none | **F, exit 0**; 3/3 rows, median 0.32014 s, hash `14076111245358280480`; queued ~14 h 42 min |
 | E6-128 backup smoke | **1563236** | 2×64 cores | 00:20 | none | **Q** at finalization |
 | E6-128 backup production | **1563237** | 2×64 cores | 00:40 | `afterok:1563236` | **H** (held) |
 | E6-128 original | 1557221 | 2×64 cores | 00:35 | — | **Q**, preserved |
@@ -31,9 +31,11 @@ campaign used a mixed CN/GN allocation and a different node family.
 ### E6-256 1557222
 The log records the 256×1 preflight timing out at 90 s with
 `mpirun --map-by ppr:64:node --bind-to none -np 256` on a mixed CN/GN
-allocation. The six multi-thread layouts completed (18/21 rows). The recovery
-uses the teammate-validated pinned pattern `--map-by core --bind-to core` on
-4×64 nodes. It is queued as 1563235; no result is claimed yet.
+allocation. The six multi-thread layouts completed (18/21 rows). Recovery
+1563235 used `--map-by core --bind-to core` on four CN nodes and completed
+three repetitions (median 0.32014 s). It is a separate allocation, so the
+seven measured configurations are reported with binding/placement caveats
+rather than as a controlled same-allocation ranking.
 
 ### E6-128 1557221
 Still queued for insufficient `node_pool`. It is **not** modified. The backup
@@ -63,11 +65,14 @@ D=54, seed=42, I=30, three repetitions, six layouts = 18 rows.
 * Smoke and production use `select=2:ncpus=64:mpiprocs=64:ompthreads=1:mem=100gb`
   and `place=scatter`; no `ncpus=64:mpiprocs=64:ompthreads=64` declaration.
 * Production is dependency-gated on the smoke.
+* Observed queue waits from `ctime`/`stime`: E2 recovery 8 s; E6-256 recovery
+  about 14 h 42 min; original E6-128 still queued for about 47 h; backup smoke
+  still queued for about 22 h; production held by dependency.
 * E2 recovery is complete; E6-256/E6-128 jobs are pending and are excluded from
   the report's measured curves.
 
 ## Remaining uncertainty
 
-The queued 1563235/1563236 may execute after the report finalization. Their
-results must be downloaded and validated before being added; they are not part
-of any current numerical claim.
+E6-256 recovery 1563235 completed and its three rows are validated and
+included. The remaining queued/held E6-128 jobs (1557221, 1563236, 1563237)
+have no results and are not part of any numerical claim.

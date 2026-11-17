@@ -25,6 +25,7 @@ computed from `stime`/`mtime`; it is not the requested walltime.
 | E6-64 Hybrid | 1557220 | F | 0 | 00:40 | 00:02:10 | 21 | 21 | **COMPLETE** | `results/vanda_harry/1557220..._e6_hybrid_64.csv` |
 | E6-128 Hybrid | 1557221 | **Q** | — | 00:35 | 0 | 18 | 0 | **QUEUED** | none |
 | E6-256 Hybrid | 1557222 | F | **1** | 00:45 | 00:03:16 | 21 | **18** | **PARTIAL** | `results/vanda_harry/1557222..._e6_hybrid_256.csv` |
+| E6-256 256×1 recovery | 1563235 | F | 0 | 00:30 | 00:00:18 | 3 | 3 | **COMPLETE, separate allocation** | `results/vanda_harry/1563235..._e6_256_rank1_recovery.csv` |
 | E7 layout | 1557223 | F | 0 | 00:25 | 00:01:06 | 10 | 10 | **COMPLETE** | `1557223..._e7_{core,ppr32,ppr16}.csv` |
 | E9 Covertype | 1552669 | F | 0 | 00:30 | 00:00:08 | 1 run | 1 | **COMPLETE** | `covtype_converged_1552669.../` |
 
@@ -52,6 +53,13 @@ repetitions each. The 18 rows have one label hash and `rows=581012`; they are
 valid for the multi-thread layouts but **not** for the missing 256x1 layout.
 This run also used a mixed CN/GN allocation and the unpinned mapping; treat it
 as a placement-limited partial result.
+
+### E6-256 recovery 1563235 (complete, 3/3)
+The four-CN-node pinned recovery (`--map-by core --bind-to core`) completed
+three 256×1 rows: median 0.32014 s, label hash `14076111245358280480`, SSE
+`64089789.818295`. It is a separate allocation from the six unpinned
+multi-thread layouts, so it completes the measured set but does not turn the
+whole comparison into a same-binding experiment.
 
 ### E6-128 1557221 (queued)
 No log or CSV exists. It was still `Q` with
