@@ -1,0 +1,24 @@
+record,experiment,source,commit,file,file_exists,sha256,csv_rows,claimed_rows,status,used_in_report,report_section,validation
+1,E1 serial GitHub,GitHub,c450025,results/vanda/vanda_e1_serial_1546646.stdct-mgmt-02.csv,true,42fc23c6185d87ceec2ea1f32ebe9d417f52a708ec50a697b615830cb4af2394,30,30,VALID,yes,6,OK
+2,E2 strong 4x64 GitHub,GitHub,c450025,results/vanda/vanda_e2_strong_1551056.stdct-mgmt-02.csv,true,98f46b3abef156dd2c63c8760c7dad80a10dae8f4e6168be148a0ef2187bfd81,27,27,VALID,yes,7,OK
+3,E2 strong 8x32 GitHub,GitHub,c450025,results/vanda/vanda_e2_strong_8x32_1551069.stdct-mgmt-02.csv,true,c8428a64a6bb6e707b253cbcd2c7f45548b538452a945f47e568669063e03580,27,27,VALID_WITH_LIMITATIONS,yes,7,OK
+4,E3 weak 4x64 GitHub,GitHub,c450025,results/vanda/vanda_e3_weak_1551057.stdct-mgmt-02.csv,true,d43523fd2c9221ff65d364f6ea51a6038b36ec97142b9c6dc52110d4ad263c3f,27,27,VALID,yes,8,OK
+5,E3 weak 8x32 GitHub,GitHub,c450025,results/vanda/vanda_e3_weak_8x32_1551070.stdct-mgmt-02.csv,true,07ee954952bfdd975e66c740086e63db0ffca88431908aa3a90cf0f2971d681e,27,27,VALID_WITH_LIMITATIONS,yes,8,OK
+6,E4 64-core Hybrid GitHub,GitHub,c450025,results/vanda/vanda_e4_hybrid72_1551076.stdct-mgmt-02.csv,true,2ba3a0f2149e31b7787fb0f6bef39fdb5048397470a20c5517da7af881c9433d,21,21,VALID,yes,10,OK
+7,Pinned 256x1 GitHub,GitHub,c450025,results/vanda/e4_pinned_4x64_1556850.csv,true,b9b2b883993273030567e4ad277467cd89bdc6c24f293e78541830958b147874,5,5,VALID,yes,10,OK
+8,CUDA A40 GitHub,GitHub,c450025,results/vanda/e7_cuda_1554475.csv,true,59d33f9abdda363704d2dc8cbef438cc8fbd210b123bef5d2985d3e1f71d0a64,30,30,VALID_WITH_LIMITATIONS,yes,11,OK
+9,Metal Apple GitHub,GitHub,c450025,results/e6_metal.csv,true,dd6f6763a7bd7fea0050a4a68055adf0097dba45aafa9733889a1651fa0fb465,30,30,VALID_WITH_LIMITATIONS,yes,11,OK
+10,Covertype E9 91-iteration,GitHub,c450025,supplementary/validation/covertype91/covtype_converged.log,true,95c865dc84e0811c405bf955be9ecfebf32d5a376db37bfe047a5000ecb01074,0,1,VALID,yes,15,LOG_PRESERVED
+11,E1 serial supplementary,Supplementary,ab64b19,supplementary/results/1552578.stdct-mgmt-02_e1_serial.csv,true,f67f21c55e6e14481ad5d100fafdb1a6b3ba8f788436643bab25e486cda63c58,39,39,VALID,no,6,OK
+12,E2 strong partial supplementary,Supplementary,ab64b19,supplementary/results/1557218.stdct-mgmt-02_e2_strong.csv,true,884934d057a8c8f897899aa2f4c180142c1316a95a0fc8293df8e41c1fe83be8,24,24,PARTIAL,no,7,OK
+13,E2 1-rank recovery,Supplementary,ab64b19,supplementary/results/1563234.stdct-mgmt-02_e2_rank1_recovery.csv,true,499af693d7ef17bde4379e7ce96ac6044c278b051fc2d6431f8bf7d32042dfd1,3,3,VALID_STANDALONE,no,7,OK
+14,E3 10M supplementary,Supplementary,ab64b19,supplementary/results/1552703.stdct-mgmt-02_e2_large.csv,true,e2104ec3d3342aed8449e8a639258fcdc41dd863e6e0728371454e69394b2d72,27,27,VALID,yes,7,OK
+15,E4 weak supplementary,Supplementary,ab64b19,supplementary/results/1552672.stdct-mgmt-02_e3_weak_256_hetero.csv,true,ce50f9517c5e96bc279416492ced4f0bcf08490aba4a33e3746072d0eaa3ab1a,27,27,VALID,no,8,OK
+16,E5 OpenMP original,Supplementary,ab64b19,supplementary/results/1557219.stdct-mgmt-02_e5_openmp_original.csv,true,713411e118ba998655bd05868bf81e0cdb422cdffd1ce7f18ea87344ea8bd1b5,21,21,VALID,yes,9,OK
+17,E5 OpenMP 10M,Supplementary,ab64b19,supplementary/results/1557219.stdct-mgmt-02_e5_openmp_10m.csv,true,1fc0788e60b8c6f9983c6e31496dc10cf8131df4b925602b4a515e93acd9d381,21,21,VALID,yes,9,OK
+18,E6-64 10M,Supplementary,ab64b19,supplementary/results/1557220.stdct-mgmt-02_e6_hybrid_64.csv,true,f50e4d7eda4dd2fa6a4a5e5df4d43576f1c1e17364112217cc21522ce886df20,21,21,VALID,yes,10,OK
+19,E6-256 partial,Supplementary,ab64b19,supplementary/results/1557222.stdct-mgmt-02_e6_hybrid_256.csv,true,e3530e2447c46d0a769327080d58de63f6f133f5491ef24fb6cc7ed97fc0934d,18,18,PARTIAL,yes,10,OK
+20,E7 8x32 placement,Supplementary,ab64b19,supplementary/results/1557223.stdct-mgmt-02_e7_core.csv;supplementary/results/1557223.stdct-mgmt-02_e7_ppr32.csv;supplementary/results/1557223.stdct-mgmt-02_e7_ppr16.csv,true,676267457f00425d15ebc9767e5090b6a3a954b31f3317f3939829bd83b708c6;098aa1a288d8578859a975f0107c41029ed29b96a0960fa899fd5d1bc5db042a;8535a1a5c8543078ff5bbe3112bfc0a7a1d3c638c3ca1c29919ee3a2975c9ae3,10,10,VALID_WITH_LIMITATIONS,yes,12,OK
+21,E6-256 recovery,Supplementary,b655469,supplementary/results/1563235.stdct-mgmt-02_e6_256_rank1_recovery.csv,true,0c4333dd50bb950845a04a695d021224effb78ab07242128411eba3283c002bd,3,3,COMPLETE,yes,10,OK
+22,E6-128 backup,Supplementary,pending,,false,,0,0,QUEUED,no,10,PENDING_NO_RESULT
+23,E6-128 original,Supplementary,pending,,false,,0,0,QUEUED,no,10,PENDING_NO_RESULT

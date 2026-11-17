@@ -59,7 +59,7 @@ D=54, seed=42, I=30, three repetitions, six layouts = 18 rows.
 
 ## Safety checks performed
 
-* Only `harry_chen` and `personal-harry_chen` were used.
+* Only the supplementary Vanda account and allocation were used.
 * Queue checked before qsub; original 1557221 still present and untouched.
 * `qsub` calls used 20 s bounds; PBS queries 10 s; no polling loop.
 * Smoke and production use `select=2:ncpus=64:mpiprocs=64:ompthreads=1:mem=100gb`
@@ -76,3 +76,12 @@ D=54, seed=42, I=30, three repetitions, six layouts = 18 rows.
 E6-256 recovery 1563235 completed and its three rows are validated and
 included. The remaining queued/held E6-128 jobs (1557221, 1563236, 1563237)
 have no results and are not part of any numerical claim.
+
+## Live-status limitation
+
+The last verified scheduler observation is **2026-11-16 13:55 SGT**
+(E6-128 original and backup smoke queued; production held). A bounded live
+Vanda check on 2026-11-17 failed at hostname resolution
+(`Could not resolve hostname vanda.nus.edu.sg`). Current queue status is
+therefore unverified; `QUEUED` reflects the last observed state, not a new
+completion or failure.

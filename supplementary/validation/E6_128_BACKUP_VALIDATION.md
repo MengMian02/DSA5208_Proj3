@@ -83,3 +83,15 @@ The old incorrect `ncpus=64:mpiprocs=64:ompthreads=64` shape is not used.
 
 **No result is claimed until the smoke passes and the production CSV is
 downloaded and validated.**
+
+
+## Last verified scheduler evidence
+
+- 2026-11-16 13:55 SGT: original 1557221 queued (`node_pool`), backup smoke
+  1563236 queued (`node_pool`), production 1563237 held by
+  `afterok:1563236`.
+- A live Vanda query on 2026-11-17 failed at hostname resolution
+  (`Could not resolve hostname vanda.nus.edu.sg`). Current queue status is
+  therefore unverified.
+- `QUEUED` in the provenance record reflects the last observed scheduler state.
+  It does not mean the jobs completed or failed.

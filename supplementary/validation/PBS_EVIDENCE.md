@@ -16,3 +16,9 @@
 
 The E6-256 recovery is a separate allocation from the six unpinned layouts.
 The E6-128 jobs are reported as pending only.
+
+
+Last verified scheduler observation: 2026-11-16 13:55 SGT. A live Vanda query
+on 2026-11-17 was unavailable because the hostname could not be resolved.
+E6-128 remains `QUEUED` from the last observed state; no completion or failure
+is inferred.
