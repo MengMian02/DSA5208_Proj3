@@ -14,6 +14,7 @@ kmeans_common.hpp:
 | kmeans_mpi | MPI ranks | observation-wise decomposition, MPI_Allreduce, optional deterministic weak-scaling generation |
 | kmeans_hybrid | MPI ranks x OpenMP threads | MPI_Init_thread(MPI_THREAD_FUNNELED) |
 | kmeans_metal | Apple GPU (Metal) | local-only, macOS + Apple Silicon |
+| kmeans_cuda | NVIDIA GPU (CUDA) | gpu/cuda/, validated against the CPU reference on one A40 |
 
 ## Algorithm and shared conventions
 
@@ -131,6 +132,7 @@ reported separately (source_bcast_s, load_s, generation_s).
 | scripts/run_mpi.py --experiment weak | E3 weak scaling |
 | scripts/run_mpi.py --experiment hybrid --layouts 72x1,36x2,... | E4 rank/thread layouts |
 | scripts/run_metal.py | E6 Metal |
+| scripts/run_cuda.py | E7 CUDA assignment kernel (Vanda A40) |
 | scripts/analyze.py | all figures + results/SUMMARY.md |
 | scripts/smoke_test.py | build + cross-implementation agreement |
 
@@ -184,21 +186,49 @@ failure until it is explained.
 
 ## HPC
 
-jobs/ holds Atlas (PBS Pro) and Vanda (SLURM) submission scripts, a required
-cluster.env filled from jobs/probe_cluster.sh, and the 256-core submission plan.
-Nothing there has been submitted; see jobs/README.md and docs/HPC_LOG.md.
+jobs/ holds the Atlas and Vanda submission kits. Both clusters run **PBS Pro**,
+not SLURM. docs/HPC_LOG.md records every job and its outcome; the measured CSVs
+are in results/atlas/, results/vanda/ and results/vanda_ours/.
+
+Vanda specifics that cost us several failed submissions and are worth knowing:
+
+* Execution queues are `from_route_only`. Route `auto` sends a job to
+  `batch_cpu` or `batch_gpu`; route `auto_free` sends it to `cpu_serial`,
+  `cpu_parallel` or `gpu`. Submitting to an execution queue directly is refused.
+* `select=N` means N **chunks**, not N hosts, so every multi-node job sets
+  `place=scatter`. Multi-node Open MPI needs `/opt/pbs/lib` on
+  `LD_LIBRARY_PATH` to use the PBS TM launch, and must not be given
+  `--hostfile`.
+* PBS derives memory from core count (~6.96 GB per core), so a 64-core chunk
+  demands a nearly empty 72-core node. That, not oversubscription, is why
+  256-core jobs wait for a long time.
+* Open MPI 4.1.8 cannot reserve cores per rank here: every `pe=` mapping form
+  (`ppr:N:node:pe=T`, `slot:pe=T`, `node:pe=T`) hangs under the TM launch and
+  `core:pe=T` is rejected. Only one-thread-per-rank layouts can be bound with
+  `--map-by core --bind-to core`; multi-thread layouts run unpinned and their
+  collectives are then dominated by scheduler-induced waiting. This is the
+  single most important caveat when reading the hybrid (E4) numbers.
+
+Measured on Vanda, job IDs in docs/HPC_LOG.md: E1 serial (1546646), E2 strong
+1->256 ranks on two different node sets (1551056 on GN-A40, 1563107 on CN),
+E3 weak 1->256 (1551057, 1551070), E4 single node at 64 cores (1551076) and E4
+at 256 workers pinned and unpinned (1556850, 1554129), E7 CUDA on one A40
+(1554475). Atlas was capped at 96 ranks per user, so the 256-core requirement is
+met from Vanda.
 
 ## Repository layout
 
     kmeans_common.hpp        shared algorithm, options, timing and generator code
     kmeans_*.cpp             the four CPU programs
     gpu/metal/               Metal shader, embedded-source generator, Objective-C++ driver
+    gpu/cuda/                CUDA assignment kernel for the Vanda A40 experiment
     scripts/                 benchmark runners, analysis, smoke test
     jobs/                    Atlas/Vanda submission kit
-    tests/                   correctness, weak-scaling and Metal tests
-    results/                 measured CSV records + SUMMARY.md
-    figures/                 generated plots
+    tests/                   correctness, weak-scaling, Metal and MPI Allreduce probes
+    results/                 measured CSV records + SUMMARY.md (vanda/, vanda_ours/, atlas/)
+    figures/                 generated plots (vanda/, atlas/)
     docs/                    experiment manifest, implementation report, HPC log
+    supplementary/           team's supplementary HPC package (own build, jobs, results)
     data/                    Covertype data set + documentation
 
 ## Supplementary HPC Experiments
