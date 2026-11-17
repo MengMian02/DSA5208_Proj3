@@ -16,6 +16,8 @@ gpu/metal/kernels_source.h
 cache/
 *.metallib
 jobs/probe_*.txt
+/report
+
 
 kmeans_serial
 kmeans_openmp

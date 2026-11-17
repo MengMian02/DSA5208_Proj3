@@ -1,0 +1,31 @@
+#!/bin/bash
+#PBS -N km-convseeds
+#PBS -P personal-e0550588
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:25:00
+#PBS -l select=1:ncpus=1:mem=16gb
+#PBS -q auto_free
+#
+# Report v5 section 15 quotes a converged Covertype clustering of 91 iterations,
+# inertia 3,712,497.96 and sizes 77764/56307/50440/51673/125172/66197/153459.
+# The committed pipeline at the documented default seed 42 converges in 46
+# iterations with inertia 3,722,934.18, so the quoted solution belongs to some
+# other initialisation. This job tries a range of seeds to identify it.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common.sh
+preflight
+
+TARGET="3712497"
+echo "seed,iterations,inertia,cluster_sizes,label_hash"
+for s in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 42 123 2024 12345; do
+  out=$(./kmeans_serial data/covtype.data 7 1000 $s 2>&1)
+  it=$(printf '%s\n' "$out" | sed -n 's/^iterations=\([0-9]*\).*/\1/p')
+  in=$(printf '%s\n' "$out" | sed -n 's/^iterations=[0-9]* inertia=\([0-9.]*\).*/\1/p')
+  cs=$(printf '%s\n' "$out" | sed -n 's/^cluster_sizes=//p')
+  lh=$(printf '%s\n' "$out" | sed -n 's/^label_hash=//p')
+  echo "^D@s,$it,$in,$cs,$lh"
+  case "$in" in $TARGET*) echo "MATCH_SEED=$s inertia=$in iterations=$it";; esac
+  case "$cs" in "77764,56307,50440,51673,125172,66197,153459") echo "MATCH_SEED_SIZES=$s";; esac
+done
+echo "SEEDS DONE"

@@ -1,0 +1,26 @@
+#!/bin/bash
+#PBS -N km-conv
+#PBS -P personal-e0550588
+#PBS -j oe
+#PBS -k oed
+#PBS -l walltime=00:15:00
+#PBS -l select=1:ncpus=1:mem=16gb
+#PBS -q auto_free
+#
+# Reproduce the converged Covertype clustering quoted in report v5 section 15
+# (91 iterations, inertia 3,712,497.96, cluster sizes 77764/56307/50440/51673/
+# 125172/66197/153459, ARI 0.0220, NMI 0.0650). The cited file
+# report/analysis/covtype_converged.log is not present in any branch and not in
+# our Vanda workspace, so the number is re-derived here from the committed code
+# and the committed dataset instead.
+cd "$PBS_O_WORKDIR" || exit 1
+. jobs/vanda/common.sh
+preflight
+build_cpu
+
+echo "== converged serial run, seed 42 (the documented default) =="
+./kmeans_serial data/covtype.data 7 1000 42 2>&1 | egrep "iterations=|converged=|cluster_sizes=|label_hash=|fit_s="
+
+echo "== converged MPI 1-rank run, seed 42 (same arithmetic, MPI code path) =="
+mpirun -np 1 --map-by core ./kmeans_mpi data/covtype.data 7 1000 42 2>&1 | egrep "iterations=|converged=|cluster_sizes=|label_hash="
+echo "CONV DONE"
