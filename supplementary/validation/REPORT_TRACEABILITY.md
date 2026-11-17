@@ -30,7 +30,8 @@ The report PDF/ZIP are not committed; this file records only source links.
 | §12 communication Fig. 15 | `results/vanda/vanda_e2_strong_*` | c450025 | legacy report asset generator; `communication.pdf` | Complete |
 | §12 E7 placement | `supplementary/results/1557223...e7_core.csv`, `...ppr32.csv`, `...ppr16.csv` | ab64b19 | narrative; no separate table/figure | Timing complete; host printout limited |
 | §13 correctness | E2/E4/E5/E6/E7 CSVs; hashes/SSE | mixed | tests and CSV columns | Cross-evidence present |
-| §15 Covertype Table 13, Figs. 16–17 | `supplementary/validation/covertype91/covtype_converged.log`, centroids, metrics, clusters, contingency | 91-run provenance incomplete | `covertype91/analyze_covertype.py`; table/figures in report v6 | Evidence preserved; original execution chain incomplete |
+| §15 revised Covertype Table 13, Figs. 16–17 | `supplementary/validation/covertype46/serial_converged.log`, `centroids.csv`, `covertype_metrics.json`, `covertype_clusters.csv`, `covertype_contingency.csv`; PBS evidence | 425c420 recorded artifacts; job 1552669 | `covertype46/analyze_covertype.py`; `table13.csv`; `figures/covertype_clusters.pdf`, `figures/covertype_contingency.pdf` | Selected 46-iteration result; validated |
+| §15 historical 91-iteration result | `supplementary/validation/covertype91/covtype_converged.log`, centroids, metrics | original execution provenance incomplete | `covertype91/analyze_covertype.py`; v6 table/figures | Retained historical; not selected |
 
 ## Boundaries
 
@@ -38,8 +39,9 @@ The report PDF/ZIP are not committed; this file records only source links.
   speedup curve.
 - The six unpinned 256-worker layouts and the separately allocated pinned
   256×1 recovery are kept separate.
-- The 91-iteration Covertype result is used by the report; the separate
-  46-iteration Vanda result is not substituted.
+- The revised Section 15 selects the 46-iteration result. The 91-iteration
+  result is historical evidence only and is not merged or substituted.
+- The current v6 report still contains 91; the team is updating Section 15 to 46.
 - `strong_10m.pdf`, `openmp_vanda.pdf` and `e6_256_recovery.pdf` exist in the
   report package, but their generation scripts were not all committed. The
   source CSVs and report outputs are preserved; this is a partial generator

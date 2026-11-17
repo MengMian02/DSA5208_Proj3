@@ -8,7 +8,7 @@ E4 64-core Hybrid GitHub,GitHub,c450025,results/vanda/vanda_e4_hybrid72_1551076.
 Pinned 256x1 GitHub,GitHub,c450025,results/vanda/e4_pinned_4x64_1556850.csv,5,VALID,yes,10,5 reps
 CUDA A40 GitHub,GitHub,c450025,results/vanda/e7_cuda_1554475.csv,30,VALID_WITH_LIMITATIONS,yes,11,float32 device
 Metal Apple GitHub,GitHub,c450025,results/e6_metal.csv,30,VALID_WITH_LIMITATIONS,yes,11,separate platform
-Covertype E9 91-iteration,GitHub,c450025,supplementary/validation/covertype91/covtype_converged.log,1,VALID,yes,15,91 iterations; origin report/analysis/covtype_converged.log; preserved evidence
+Covertype E9 91-iteration,GitHub,c450025,supplementary/validation/covertype91/covtype_converged.log,1,VALID,no,15,91 iterations; historical result retained; not used in revised Section 15; preserved at supplementary/validation/covertype91/
 E1 serial supplementary,Supplementary,ab64b19,supplementary/results/1552578.stdct-mgmt-02_e1_serial.csv,39,VALID,no,6,includes 1M/5M/10M; not cited by report v6
 E2 strong partial supplementary,Supplementary,ab64b19,supplementary/results/1557218.stdct-mgmt-02_e2_strong.csv,24,PARTIAL,no,7,2-256 ranks; 1-rank missing; replication only
 E2 1-rank recovery,Supplementary,ab64b19,supplementary/results/1563234.stdct-mgmt-02_e2_rank1_recovery.csv,3,VALID_STANDALONE,no,7,IN-010; not merged into main curve and not cited by report v6
@@ -22,3 +22,4 @@ E7 8x32 placement,Supplementary,ab64b19,supplementary/results/1557223.stdct-mgmt
 E6-256 recovery,Supplementary,b655469,supplementary/results/1563235.stdct-mgmt-02_e6_256_rank1_recovery.csv,3,COMPLETE,yes,10,job 1563235; median 0.320140 s; hash 14076111245358280480; SSE 64089789.818295; separate pinned allocation
 E6-128 backup,Supplementary,pending,,0,QUEUED,no,10,jobs 1563236/1563237; no result CSV; awaiting resources
 E6-128 original,Supplementary,pending,,0,QUEUED,no,10,job 1557221; no result CSV; awaiting resources
+Covertype E9 46-iteration,Supplementary,425c420,supplementary/validation/covertype46/covertype_metrics.json,1,VALID,yes,15,PBS job 1552669; 46 iterations; inertia 3722934.178255; ARI 0.019121638; NMI 0.056173448; AMI 0.056154366; selected for revised Section 15
